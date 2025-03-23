@@ -1,0 +1,213 @@
+/* Custom Styles for TimeBridge App */
+
+/* Calendar Styling Overrides */
+.fc-theme-standard .fc-scrollgrid {
+    border: none !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+    padding: 8px 4px;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+.fc .fc-daygrid-day-number {
+    padding: 8px;
+    color: #6b7280;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+.fc .fc-button-primary {
+    background-color: #4f46e5;
+    border-color: #4338ca;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: #4338ca;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active, 
+.fc .fc-button-primary:not(:disabled):active {
+    background-color: #3730a3;
+    border-color: #312e81;
+}
+
+.fc-event {
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.fc-event:hover {
+    transform: scale(1.02);
+}
+
+/* Custom Animation Classes */
+.slide-in-bottom {
+    animation: slide-in-bottom 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes slide-in-bottom {
+    0% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fade-in 0.3s ease-in both;
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Toast animation */
+.toast-enter {
+    animation: toast-enter 0.3s ease forwards;
+}
+
+.toast-leave {
+    animation: toast-leave 0.3s ease forwards;
+}
+
+@keyframes toast-enter {
+    0% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-leave {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+}
+
+/* Meeting Card Styles */
+.meeting-card {
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+
+.meeting-card:hover {
+    background-color: #f9fafb;
+}
+
+.meeting-card.pending {
+    border-left-color: #f59e0b;
+}
+
+.meeting-card.approved {
+    border-left-color: #10b981;
+}
+
+.meeting-card.canceled {
+    border-left-color: #ef4444;
+}
+
+/* Form Elements Styling */
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* === v0 Component Styles === */
+
+/* Copy tooltip styles */
+.copy-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.copy-link:hover .copy-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Calendar day styles */
+.calendar-day.selected {
+  background-color: #2563eb;
+  color: white;
+}
+
+.calendar-day.busy::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #eab308;
+}
+
+/* Mobile menu toggle */
+.mobile-menu-hidden {
+  display: none;
+}
+
+/* Active navigation styles */
+.nav-active {
+  background-color: #2563eb;
+  color: white;
+}
+
+/* Focus styles for accessibility */
+button:focus, a:focus, input:focus, select:focus, textarea:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+} 

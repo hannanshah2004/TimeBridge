@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Manager - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .copy-tooltip {
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .copy-link:hover .copy-tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Navigation -->
+  <nav class="bg-white border-b">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <a href="index.html" class="flex items-center gap-2 font-bold text-xl text-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            Schedule Manager
+          </a>
+        </div>
+        <div class="hidden md:block">
+          <div class="flex items-center space-x-4">
+            <a href="index.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">Home</a>
+            <a href="calendar.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">Calendar</a>
+            <a href="requests.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">Requests</a>
+            <a href="meetings.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">Meetings</a>
+            <a href="dashboard.html" class="px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600">Dashboard</a>
+          </div>
+        </div>
+        <div class="md:hidden">
+          <button class="flex items-center px-3 py-2 border rounded text-gray-500 border-gray-500 hover:text-gray-700 hover:border-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile menu (hidden by default) -->
+    <div class="hidden md:hidden">
+      <div class="px-2 pt-2 pb-3 space-y-1">
+        <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">Home</a>
+        <a href="calendar.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">Calendar</a>
+        <a href="requests.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">Requests</a>
+        <a href="meetings.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100">Meetings</a>
+        <a href="dashboard.html" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-blue-600">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p class="text-gray-500">Welcome back! Here's an overview of your schedule.</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="calendar.html" class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Schedule New Meeting</a>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div class="rounded-lg border bg-white p-6 shadow-sm">
+        <div class="pb-2">
+          <h2 class="text-lg font-semibold">Total Meetings</h2>
+          <p class="text-sm text-gray-500">This month</p>
+        </div>
+        <div>
+          <div class="text-4xl font-bold">24</div>
+          <p class="text-sm text-gray-500">+8% from last month</p>
+        </div>
+      </div>
+
+      <div class="rounded-lg border bg-white p-6 shadow-sm">
+        <div class="pb-2">
+          <h2 class="text-lg font-semibold">Pending Requests</h2>
+          <p class="text-sm text-gray-500">Awaiting your approval</p>
+        </div>
+        <div>
+          <div class="text-4xl font-bold">3</div>
+          <a href="requests.html" class="text-sm text-blue-600 hover:text-blue-800">View all requests</a>
+        </div>
+      </div>
+
+      <div class="rounded-lg border bg-white p-6 shadow-sm">
+        <div class="pb-2">
+          <h2 class="text-lg font-semibold">Available Hours</h2>
+          <p class="text-sm text-gray-500">This week</p>
+        </div>
+        <div>
+          <div class="text-4xl font-bold">12</div>
+          <a href="calendar.html" class="text-sm text-blue-600 hover:text-blue-800">Manage availability</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Meetings -->
+    <div class="mt-8">
+      <h2 class="mb-4 text-2xl font-bold tracking-tight">Upcoming Meetings</h2>
+      <div class="rounded-lg border bg-white shadow-sm">
+        <div class="divide-y">
+          <!-- Meeting row 1 -->
+          <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-4">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              </div>
+              
+              <div>
+                <h3 class="font-medium">Team Standup</h3>
+                <p class="text-sm text-gray-500">Today • 9:00 AM - 9:30 AM</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span class="text-sm text-gray-500">4</span>
+              </div>
+              
+              <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Confirmed</span>
+              
+              <button class="rounded-md p-1 hover:bg-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Meeting row 2 -->
+          <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-4">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              </div>
+              
+              <div>
+                <h3 class="font-medium">Client Presentation</h3>
+                <p class="text-sm text-gray-500">Tomorrow • 11:00 AM - 12:00 PM</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span class="text-sm text-gray-500">3</span>
+              </div>
+              
+              <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Confirmed</span>
+              
+              <button class="rounded-md p-1 hover:bg-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Meeting row 3 -->
+          <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-4">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              </div>
+              
+              <div>
+                <h3 class="font-medium">Product Planning</h3>
+                <p class="text-sm text-gray-500">Mar 24, 2025 • 2:00 PM - 3:30 PM</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span class="text-sm text-gray-500">5</span>
+              </div>
+              
+              <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Confirmed</span>
+              
+              <button class="rounded-md p-1 hover:bg-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Meeting row 4 -->
+          <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-4">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              </div>
+              
+              <div>
+                <h3 class="font-medium">Design Review</h3>
+                <p class="text-sm text-gray-500">Mar 26, 2025 • 10:00 AM - 11:00 AM</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span class="text-sm text-gray-500">2</span>
+              </div>
+              
+              <span class="rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800">Pending</span>
+              
+              <button class="rounded-md p-1 hover:bg-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Meeting row 5 -->
+          <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-4">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              </div>
+              
+              <div>
+                <h3 class="font-medium">Quarterly Review</h3>
+                <p class="text-sm text-gray-500">Mar 30, 2025 • 1:00 PM - 2:30 PM</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span class="text-sm text-gray-500">8</span>
+              </div>
+              
+              <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Confirmed</span>
+              
+              <button class="rounded-md p-1 hover:bg-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 text-center">
+        <a href="meetings.html" class="text-sm font-medium text-blue-600 hover:text-blue-800">View all meetings →</a>
+      </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="mt-8">
+      <h2 class="mb-4 text-2xl font-bold tracking-tight">Recent Activity</h2>
+      <div class="rounded-lg border bg-white p-6 shadow-sm">
+        <ul class="space-y-4">
+          <li class="flex items-start gap-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <p class="font-medium">You approved a meeting request from <span class="text-blue-600">Sarah Johnson</span></p>
+              <p class="text-sm text-gray-500">Today at 8:15 AM</p>
+            </div>
+          </li>
+          
+          <li class="flex items-start gap-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+            </div>
+            <div>
+              <p class="font-medium">You scheduled a new meeting: <span class="text-blue-600">Quarterly Review</span></p>
+              <p class="text-sm text-gray-500">Yesterday at 3:45 PM</p>
+            </div>
+          </li>
+          
+          <li class="flex items-start gap-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-red-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+            </div>
+            <div>
+              <p class="font-medium">You declined a meeting request from <span class="text-blue-600">David Clark</span></p>
+              <p class="text-sm text-gray-500">Yesterday at 2:30 PM</p>
+            </div>
+          </li>
+          
+          <li class="flex items-start gap-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-yellow-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+              <p class="font-medium">You rescheduled <span class="text-blue-600">Team Standup</span> meeting</p>
+              <p class="text-sm text-gray-500">March 20, 2025 at 4:15 PM</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t mt-12 py-6">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col items-center justify-between gap-4 md:flex-row">
+        <div class="text-center md:text-left">
+          <p class="text-sm text-gray-500">© 2025 Schedule Manager. All rights reserved.</p>
+        </div>
+        <div class="flex gap-4">
+          <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Privacy Policy</a>
+          <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Terms of Service</a>
+          <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,61 @@
+/* Custom styles for the scheduling application */
+
+/* Copy tooltip styles */
+.copy-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.copy-link:hover .copy-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Calendar day styles */
+.calendar-day.selected {
+  background-color: #2563eb;
+  color: white;
+}
+
+.calendar-day.busy::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #eab308;
+}
+
+/* Mobile menu toggle */
+.mobile-menu-hidden {
+  display: none;
+}
+
+/* Active navigation styles */
+.nav-active {
+  background-color: #2563eb;
+  color: white;
+}
+
+/* Focus styles for accessibility */
+button:focus, a:focus, input:focus, select:focus, textarea:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

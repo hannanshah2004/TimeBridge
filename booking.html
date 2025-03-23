@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Meeting - TimeBridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-bold text-indigo-600">TimeBridge</h1>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="md:flex md:items-center md:justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-gray-900">Book a Meeting with John Doe</h2>
+                        <p class="mt-1 text-sm text-gray-500">Select a time slot from the available options.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Calendar View -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <div id="booking-calendar" class="h-[600px]"></div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Form -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-lg shadow overflow-hidden">
+                            <div class="px-4 py-5 sm:p-6">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Meeting Details</h3>
+                                
+                                <form id="booking-form" class="space-y-6">
+                                    <div id="selected-time-display" class="hidden bg-indigo-50 p-4 rounded-md">
+                                        <p class="text-sm font-medium text-indigo-700" id="selected-date-text">No time selected</p>
+                                        <p class="text-sm text-indigo-500" id="selected-time-text"></p>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="name" class="block text-sm font-medium text-gray-700">Your Name</label>
+                                        <input type="text" name="name" id="name" class="mt-1 form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Jane Smith" required>
+                                    </div>
+
+                                    <div>
+                                        <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                        <input type="email" name="email" id="email" class="mt-1 form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="jane@example.com" required>
+                                    </div>
+
+                                    <div>
+                                        <label for="title" class="block text-sm font-medium text-gray-700">Meeting Title</label>
+                                        <input type="text" name="title" id="title" class="mt-1 form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Discuss Project Proposal" required>
+                                    </div>
+
+                                    <div>
+                                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                                        <textarea name="description" id="description" rows="4" class="mt-1 form-textarea block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Please include any relevant details or agenda items."></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label for="duration" class="block text-sm font-medium text-gray-700">Duration</label>
+                                        <select name="duration" id="duration" class="mt-1 form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                            <option value="30">30 minutes</option>
+                                            <option value="60" selected>1 hour</option>
+                                            <option value="90">1.5 hours</option>
+                                            <option value="120">2 hours</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <button type="submit" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" disabled id="submit-booking">
+                                            Request Meeting
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white">
+            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between">
+                <div class="text-center md:text-left">
+                    <p class="text-sm text-gray-500">&copy; 2023 TimeBridge. All rights reserved.</p>
+                </div>
+                <div class="flex justify-center md:justify-end mt-4 md:mt-0">
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-700 mr-4">Terms of Service</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-700 mr-4">Privacy Policy</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Contact</a>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Success Modal -->
+        <div id="success-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="px-4 py-5 sm:p-6 text-center">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                        <i class="fa-solid fa-check text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Booking Requested!</h3>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Your meeting request has been sent. You'll receive an email once it's confirmed.
+                    </p>
+                    <div class="mt-5">
+                        <button id="close-success-modal" class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize booking calendar
+            initBookingCalendar();
+            
+            // Setup form submission
+            setupBookingForm();
+            
+            // Setup modal close button
+            document.getElementById('close-success-modal')?.addEventListener('click', function() {
+                document.getElementById('success-modal').classList.add('hidden');
+            });
+        });
+        
+        // Global variables to store selected date and time
+        let selectedDate = null;
+        let selectedTime = null;
+        
+        // Initialize booking calendar
+        function initBookingCalendar() {
+            const calendarEl = document.getElementById('booking-calendar');
+            if (!calendarEl) return;
+            
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'timeGridWeek,timeGridDay'
+                },
+                slotMinTime: '09:00:00',
+                slotMaxTime: '18:00:00',
+                slotDuration: '00:30:00',
+                allDaySlot: false,
+                height: '600px',
+                selectMirror: true,
+                selectable: true,
+                selectAllow: function(selectInfo) {
+                    return isTimeSlotAvailable(selectInfo.start, selectInfo.end);
+                },
+                select: function(info) {
+                    handleTimeSlotSelect(info.start, info.end);
+                },
+                events: [
+                    // Simulated busy slots (in a real app, these would come from an API)
+                    {
+                        start: new Date(new Date().setHours(10, 0, 0, 0)),
+                        end: new Date(new Date().setHours(11, 0, 0, 0)),
+                        display: 'background',
+                        color: '#EF4444'
+                    },
+                    {
+                        start: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(14, 0, 0, 0),
+                        end: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(15, 30, 0, 0),
+                        display: 'background',
+                        color: '#EF4444'
+                    },
+                    {
+                        start: new Date(new Date().setDate(new Date().getDate() + 2)).setHours(9, 0, 0, 0),
+                        end: new Date(new Date().setDate(new Date().getDate() + 2)).setHours(10, 0, 0, 0),
+                        display: 'background',
+                        color: '#EF4444'
+                    }
+                ],
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    meridiem: 'short'
+                },
+                businessHours: {
+                    daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+                    startTime: '09:00',
+                    endTime: '18:00',
+                },
+                // Disable past dates and weekends
+                validRange: {
+                    start: new Date()
+                },
+                selectOverlap: false
+            });
+            
+            calendar.render();
+        }
+        
+        // Check if a time slot is available
+        function isTimeSlotAvailable(start, end) {
+            // In a real app, this would check against backend data
+            // For this demo, just checking if it's a weekday and within business hours
+            const day = start.getDay();
+            const hour = start.getHours();
+            
+            // Check if it's a weekday (1-5) and between 9 AM and 6 PM
+            return day >= 1 && day <= 5 && hour >= 9 && hour < 18;
+        }
+        
+        // Handle time slot selection
+        function handleTimeSlotSelect(start, end) {
+            selectedDate = start;
+            selectedTime = { start, end };
+            
+            // Update the display
+            const selectedTimeDisplay = document.getElementById('selected-time-display');
+            const selectedDateText = document.getElementById('selected-date-text');
+            const selectedTimeText = document.getElementById('selected-time-text');
+            
+            if (selectedTimeDisplay && selectedDateText && selectedTimeText) {
+                // Format the date and time
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                
+                const formattedDate = start.toLocaleDateString('en-US', dateOptions);
+                const formattedStartTime = start.toLocaleTimeString('en-US', timeOptions);
+                const formattedEndTime = end.toLocaleTimeString('en-US', timeOptions);
+                
+                selectedDateText.textContent = formattedDate;
+                selectedTimeText.textContent = `${formattedStartTime} - ${formattedEndTime}`;
+                selectedTimeDisplay.classList.remove('hidden');
+                
+                // Enable the submit button
+                document.getElementById('submit-booking').removeAttribute('disabled');
+            }
+        }
+        
+        // Setup booking form submission
+        function setupBookingForm() {
+            const form = document.getElementById('booking-form');
+            if (!form) return;
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!selectedTime) {
+                    alert('Please select a time slot first.');
+                    return;
+                }
+                
+                // Gather form data
+                const formData = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    duration: document.getElementById('duration').value,
+                    start: selectedTime.start,
+                    end: selectedTime.end
+                };
+                
+                // In a real app, this would send the data to a backend API
+                console.log('Booking request:', formData);
+                
+                // Show success modal
+                document.getElementById('success-modal').classList.remove('hidden');
+                
+                // Reset form
+                form.reset();
+                selectedDate = null;
+                selectedTime = null;
+                document.getElementById('selected-time-display').classList.add('hidden');
+                document.getElementById('submit-booking').setAttribute('disabled', 'disabled');
+            });
+        }
+    </script>
+</body>
+</html> 

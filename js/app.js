@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // Mock database for demonstration purposes
 // In a real app, this would be replaced with actual backend calls
 //Balls
-// varun
 const mockDatabase = {
     // Meeting status: 'pending', 'approved', 'canceled'
     meetings: [

@@ -1,121 +1,92 @@
-// TimeBridge App Main JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize components
-    initApplication();
+import supabase from "./supabaseClient.js";
+
+async function fetchMeetings() {
+    let { data: Meetings, error } = await supabase.from('Meetings').select('*');
+
+    if (error) {
+        console.error("Error fetching meetings:", error);
+        return [];
+    }
+
+    console.log(Meetings);
+    return Meetings;
+}
+
+document.addEventListener('DOMContentLoaded', async function () {
+    // Fetch meetings before initializing the database
+    const meetings = await fetchMeetings();
+
+    // Now initialize mockDatabase
+    const mockDatabase = {
+        meetings: meetings || [],
+
+        addMeeting(meeting) {
+            const newId = this.meetings.length > 0 ? Math.max(...this.meetings.map(m => m.id)) + 1 : 1;
+            const newMeeting = {
+                id: newId,
+                ...meeting,
+                status: 'pending',
+                color: '#f59e0b'
+            };
+            this.meetings.push(newMeeting);
+            return newMeeting;
+        },
+
+        updateMeeting(id, updates) {
+            const index = this.meetings.findIndex(m => m.id === id);
+            if (index !== -1) {
+                if (updates.status === 'approved') {
+                    updates.color = '#10b981';
+                } else if (updates.status === 'canceled') {
+                    updates.color = '#ef4444';
+                }
+                this.meetings[index] = { ...this.meetings[index], ...updates };
+                return this.meetings[index];
+            }
+            return null;
+        },
+
+        getUpcomingMeetings() {
+            const now = new Date();
+            return this.meetings
+                .filter(m => new Date(m.start) >= now && m.status !== 'canceled')
+                .sort((a, b) => new Date(a.start) - new Date(b.start));
+        },
+
+        getLaterMeetings() {
+            const now = new Date();
+            const nextWeek = new Date(now);
+            nextWeek.setDate(now.getDate() + 7);
+
+            return this.meetings
+                .filter(m => {
+                    const meetingDate = new Date(m.start);
+                    return meetingDate >= nextWeek && m.status !== 'canceled';
+                })
+                .sort((a, b) => new Date(a.start) - new Date(b.start));
+        },
+
+        getMeetingById(id) {
+            return this.meetings.find(m => m.id === id);
+        }
+    };
+
+    // Initialize application only after `mockDatabase` is ready
+    initApplication(mockDatabase);
+    console.log('TimeBridge app initialized!');
 });
 
-// Mock database for demonstration purposes
-// In a real app, this would be replaced with actual backend calls
-//Balls
-const mockDatabase = {
-    // Meeting status: 'pending', 'approved', 'canceled'
-    meetings: [
-        {
-            id: 1,
-            title: 'Project Kickoff Meeting',
-            start: new Date(new Date().setHours(10, 0, 0, 0)),
-            end: new Date(new Date().setHours(11, 0, 0, 0)),
-            requesterName: 'Sarah Johnson',
-            requesterEmail: 'sarah@example.com',
-            description: 'Discuss the new marketing project goals and timeline.',
-            status: 'approved',
-            color: '#10b981'
-        },
-        {
-            id: 2,
-            title: 'Client Presentation',
-            start: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(14, 0, 0, 0),
-            end: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(15, 30, 0, 0),
-            requesterName: 'Michael Chen',
-            requesterEmail: 'mchen@example.com',
-            description: 'Present the Q3 results to the client.',
-            status: 'pending',
-            color: '#f59e0b'
-        },
-        {
-            id: 3,
-            title: 'Team Weekly Sync',
-            start: new Date(new Date().setDate(new Date().getDate() + 2)).setHours(9, 0, 0, 0),
-            end: new Date(new Date().setDate(new Date().getDate() + 2)).setHours(10, 0, 0, 0),
-            requesterName: 'Team Lead',
-            requesterEmail: 'lead@example.com',
-            description: 'Weekly team sync to discuss progress and blockers.',
-            status: 'approved',
-            color: '#10b981'
-        }
-    ],
-
-    // Add a new meeting
-    addMeeting(meeting) {
-        const newId = this.meetings.length > 0 ? Math.max(...this.meetings.map(m => m.id)) + 1 : 1;
-        const newMeeting = {
-            id: newId,
-            ...meeting,
-            status: 'pending',
-            color: '#f59e0b'
-        };
-        this.meetings.push(newMeeting);
-        return newMeeting;
-    },
-
-    // Update a meeting
-    updateMeeting(id, updates) {
-        const index = this.meetings.findIndex(m => m.id === id);
-        if (index !== -1) {
-            // Update color based on status
-            if (updates.status === 'approved') {
-                updates.color = '#10b981';
-            } else if (updates.status === 'canceled') {
-                updates.color = '#ef4444';
-            }
-            
-            this.meetings[index] = {...this.meetings[index], ...updates};
-            return this.meetings[index];
-        }
-        return null;
-    },
-
-    // Get upcoming meetings (sorted by date)
-    getUpcomingMeetings() {
-        const now = new Date();
-        return this.meetings
-            .filter(m => new Date(m.start) >= now && m.status !== 'canceled')
-            .sort((a, b) => new Date(a.start) - new Date(b.start));
-    },
-
-    // Extend database with additional methods
-    getLaterMeetings() {
-        const now = new Date();
-        const nextWeek = new Date(now);
-        nextWeek.setDate(now.getDate() + 7);
-        
-        return this.meetings
-            .filter(m => {
-                const meetingDate = new Date(m.start);
-                return meetingDate >= nextWeek && m.status !== 'canceled';
-            })
-            .sort((a, b) => new Date(a.start) - new Date(b.start));
-    },
-
-    getMeetingById(id) {
-        return this.meetings.find(m => m.id === id);
-    }
-};
-
-// Initialize the application
-function initApplication() {
-    // Setup main UI elements
+// Modify `initApplication` to accept `mockDatabase`
+function initApplication(mockDatabase) {
+    window.mockDatabase = mockDatabase; // Make it globally accessible if needed
+    //window.location.href = '../pages/userAuth.html';
     setupMainContainer();
-    
-    // Add navigation event listeners
     setupNavigation();
-    
-    // Initialize default view (dashboard)
     loadView('dashboard');
-    
-    // Setup global event listeners
     setupGlobalEventListeners();
 }
+
+
 
 // Setup the main container for dynamic content
 function setupMainContainer() {

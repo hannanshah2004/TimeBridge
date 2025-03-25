@@ -205,12 +205,12 @@
     <script type="module">
         import * as auth from './js/auth.js';
         
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // Initialize authentication
-            if (!auth.checkAuth()) return;
+            if (!await auth.checkAuth()) return;
             
             // Setup user menu 
-            auth.setupUserMenu();
+            await auth.setupUserMenu();
             
             // Setup toast notifications
             auth.setupToast();

@@ -1,19 +1,32 @@
 // Authentication utilities for TimeBridge
 import supabase from "./supabaseClient.js";
 
-// Check if the user is authenticated
-export function isAuthenticated() {
-    return sessionStorage.getItem('isAuthenticated') === 'true';
+// Check if the user is authenticated using Supabase
+export async function isAuthenticated() {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+        console.error("Error checking authentication:", error);
+        return false;
+    }
+    return data.session !== null;
 }
 
 // Get the authenticated user's email
-export function getUserEmail() {
-    return sessionStorage.getItem('userEmail');
+export async function getUserEmail() {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) {
+        console.error("Error getting user:", error);
+        return null;
+    }
+    return data.user.email;
 }
 
 // Get user initials from email
-export function getUserInitials(email) {
-    if (!email) email = getUserEmail();
+export async function getUserInitials(email) {
+    if (!email) {
+        email = await getUserEmail();
+    }
+    
     if (!email) return 'TB'; // Default fallback
     
     // Extract initials from the email username (before @)
@@ -26,44 +39,69 @@ export function getUserInitials(email) {
 }
 
 // Sign in a user
-export async function signIn(email, rememberMe = false) {
-    // For demo purposes, we're setting session storage auth
-    // without requiring actual Supabase authentication to succeed
-    sessionStorage.setItem('isAuthenticated', 'true');
-    sessionStorage.setItem('userEmail', email);
-    
-    if (rememberMe) {
-        localStorage.setItem('rememberedUser', email);
-    }
-    
-    // For demo, attempt to sign in with Supabase without a real password
-    // This will likely fail, but we don't need it to succeed for the demo
+export async function signIn(email, password, rememberMe = false) {
     try {
-        // Just a dummy auth attempt for demo - not required to succeed
-        // In a real app, you would use actual credentials
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
-            password: 'demopassword', // Demo password, not used in this mock app
+            password: password,
         });
-        console.log("Supabase auth attempt", data, error);
+        
+        if (error) {
+            console.error("Sign in error:", error);
+            throw error;
+        }
+        
+        if (rememberMe) {
+            localStorage.setItem('rememberedUser', email);
+        }
+        
+        return data;
     } catch (err) {
-        console.log("Supabase auth error", err);
-        // We continue regardless of errors since this is a demo
+        console.error("Sign in error:", err);
+        throw err;
+    }
+}
+
+// Sign up a new user
+export async function signUp(email, password) {
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+        });
+        
+        if (error) {
+            console.error("Sign up error:", error);
+            throw error;
+        }
+        
+        return data;
+    } catch (err) {
+        console.error("Sign up error:", err);
+        throw err;
     }
 }
 
 // Sign out a user
-export function signOut() {
-    sessionStorage.removeItem('isAuthenticated');
-    sessionStorage.removeItem('userEmail');
-    // We don't remove rememberedUser to maintain "remember me" functionality
-    
-    // Redirect to login page
-    window.location.href = 'index.html';
+export async function signOut() {
+    try {
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+            console.error("Sign out error:", error);
+            throw error;
+        }
+        
+        // Redirect to login page
+        window.location.href = 'index.html';
+    } catch (err) {
+        console.error("Sign out error:", err);
+        throw err;
+    }
 }
 
 // Setup user menu functionality
-export function setupUserMenu() {
+export async function setupUserMenu() {
     const userMenuButton = document.getElementById('user-menu-button');
     const userMenu = document.getElementById('user-menu');
     const signOutButton = document.getElementById('sign-out');
@@ -72,7 +110,8 @@ export function setupUserMenu() {
         // Update user initials
         const userInitials = document.getElementById('user-initials');
         if (userInitials) {
-            userInitials.textContent = getUserInitials();
+            const initials = await getUserInitials();
+            userInitials.textContent = initials;
         }
         
         // Toggle user menu
@@ -98,8 +137,8 @@ export function setupUserMenu() {
 }
 
 // Check authentication and redirect if needed
-export function checkAuth(requireAuth = true) {
-    const auth = isAuthenticated();
+export async function checkAuth(requireAuth = true) {
+    const auth = await isAuthenticated();
     const onLoginPage = window.location.pathname.includes('index.html') || window.location.pathname === '/';
     
     if (requireAuth && !auth && !onLoginPage) {
@@ -171,12 +210,12 @@ export function setupToast() {
 }
 
 // Initialize authentication features
-export function initAuth() {
+export async function initAuth() {
     // Check authentication
-    if (!checkAuth()) return;
+    if (!await checkAuth()) return;
     
     // Setup user menu
-    setupUserMenu();
+    await setupUserMenu();
     
     // Setup toast notifications
     setupToast();

@@ -23,6 +23,24 @@ async function fetchUser(){
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
+    // Check if the user is authenticated
+    const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+    
+    // If on login page, don't continue with app initialization
+    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+        if (isAuthenticated) {
+            // If already authenticated and on login page, redirect to dashboard
+            window.location.href = 'dashboard.html';
+        }
+        return; // Don't continue with app initialization on login page
+    }
+    
+    // If not authenticated and not on login page, redirect to login
+    if (!isAuthenticated) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
     // Fetch meetings before initializing the database
     const meetings = await fetchMeetings();
     const user = await fetchUser();
@@ -95,14 +113,27 @@ document.addEventListener('DOMContentLoaded', async function () {
 // Modify `initApplication` to accept `mockDatabase`
 function initApplication(mockDatabase) {
     window.mockDatabase = mockDatabase; // Make it globally accessible if needed
-    //window.location.href = '../pages/userAuth.html';
-    setupMainContainer();
-    setupNavigation();
-    loadView('dashboard');
-    setupGlobalEventListeners();
+    
+    // User data from authentication
+    const userEmail = sessionStorage.getItem('userEmail');
+    
+    // Check if we're on the dashboard page
+    if (window.location.pathname.includes('dashboard.html')) {
+        setupMainContainer();
+        setupNavigation();
+        loadView('dashboard');
+        setupGlobalEventListeners();
+        
+        // Update user initials in the UI if needed
+        if (userEmail) {
+            const userInitials = document.getElementById('user-initials');
+            if (userInitials) {
+                const initials = userEmail.split('@')[0].substring(0, 2).toUpperCase();
+                userInitials.textContent = initials;
+            }
+        }
+    }
 }
-
-
 
 // Setup the main container for dynamic content
 function setupMainContainer() {

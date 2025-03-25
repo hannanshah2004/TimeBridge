@@ -18,6 +18,23 @@
                     <div class="flex items-center">
                         <h1 class="text-xl font-bold text-indigo-600">TimeBridge</h1>
                     </div>
+                    
+                    <!-- Add user profile button -->
+                    <div class="flex items-center">
+                        <div class="md:ml-4 md:flex-shrink-0 md:flex md:items-center">
+                            <button type="button" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" id="user-menu-button">
+                                <span class="sr-only">Open user menu</span>
+                                <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                                    <span class="text-indigo-800 font-medium" id="user-initials">JD</span>
+                                </div>
+                            </button>
+                            <!-- User dropdown menu (hidden by default) -->
+                            <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                                <a href="dashboard.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Dashboard</a>
+                                <a href="#" id="sign-out" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Sign out</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -27,7 +44,7 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="md:flex md:items-center md:justify-between mb-8">
                     <div>
-                        <h2 class="text-2xl font-semibold text-gray-900">Book a Meeting with John Doe</h2>
+                        <h2 class="text-2xl font-semibold text-gray-900">Book a Meeting with <span id="host-name">John Doe</span></h2>
                         <p class="mt-1 text-sm text-gray-500">Select a time slot from the available options.</p>
                     </div>
                 </div>
@@ -128,10 +145,37 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast-notification" class="hidden fixed bottom-5 right-5 bg-white shadow-lg rounded-lg p-4 flex items-center space-x-4 z-50">
+            <div class="flex-shrink-0">
+                <i id="toast-icon" class="fa-solid fa-check-circle text-green-500 text-xl"></i>
+            </div>
+            <div>
+                <p id="toast-message" class="text-sm font-medium text-gray-900"></p>
+            </div>
+            <div class="ml-auto flex-shrink-0">
+                <button id="close-toast" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <span class="sr-only">Close</span>
+                    <i class="fa-solid fa-times text-sm"></i>
+                </button>
+            </div>
+        </div>
     </div>
 
-    <script>
+    <script type="module">
+        import * as auth from './js/auth.js';
+        
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize authentication
+            if (!auth.checkAuth()) return;
+            
+            // Setup user menu 
+            auth.setupUserMenu();
+            
+            // Setup toast notifications
+            auth.setupToast();
+            
             // Initialize booking calendar
             initBookingCalendar();
             
@@ -262,7 +306,7 @@
                 e.preventDefault();
                 
                 if (!selectedTime) {
-                    alert('Please select a time slot first.');
+                    showToast('Please select a time slot', 'error');
                     return;
                 }
                 

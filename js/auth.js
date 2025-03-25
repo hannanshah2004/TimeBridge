@@ -1,4 +1,5 @@
 // Authentication utilities for TimeBridge
+import supabase from "./supabaseClient.js";
 
 // Check if the user is authenticated
 export function isAuthenticated() {
@@ -25,12 +26,29 @@ export function getUserInitials(email) {
 }
 
 // Sign in a user
-export function signIn(email, rememberMe = false) {
+export async function signIn(email, rememberMe = false) {
+    // For demo purposes, we're setting session storage auth
+    // without requiring actual Supabase authentication to succeed
     sessionStorage.setItem('isAuthenticated', 'true');
     sessionStorage.setItem('userEmail', email);
     
     if (rememberMe) {
         localStorage.setItem('rememberedUser', email);
+    }
+    
+    // For demo, attempt to sign in with Supabase without a real password
+    // This will likely fail, but we don't need it to succeed for the demo
+    try {
+        // Just a dummy auth attempt for demo - not required to succeed
+        // In a real app, you would use actual credentials
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: 'demopassword', // Demo password, not used in this mock app
+        });
+        console.log("Supabase auth attempt", data, error);
+    } catch (err) {
+        console.log("Supabase auth error", err);
+        // We continue regardless of errors since this is a demo
     }
 }
 

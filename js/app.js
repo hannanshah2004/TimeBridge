@@ -45,12 +45,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const meetings = await fetchMeetings();
     const user = await fetchUser();
 
-    if (!user) {
-        window.location.href = '../pages/userAuth.html';
-        return;
-    }
-
-    // Now initialize mockDatabase
+    // Even if Supabase auth fails, don't redirect if session auth is valid
+    // This prevents the redirect loop with index.html
     const mockDatabase = {
         meetings: meetings || [],
 

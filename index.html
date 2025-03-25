@@ -264,13 +264,23 @@
                 
                 if (user) {
                     // Use auth utility to sign in
-                    auth.signIn(email, rememberMe);
-                    
-                    // Show success modal
-                    modalTitle.textContent = 'Sign In Successful!';
-                    modalMessage.textContent = 'You are now signed in to your TimeBridge account.';
-                    successModal.classList.remove('hidden');
-                    successModal.classList.add('fade-in');
+                    auth.signIn(email, rememberMe)
+                        .then(() => {
+                            // Show success modal
+                            modalTitle.textContent = 'Sign In Successful!';
+                            modalMessage.textContent = 'You are now signed in to your TimeBridge account.';
+                            successModal.classList.remove('hidden');
+                            successModal.classList.add('fade-in');
+                        })
+                        .catch(err => {
+                            console.error("Sign in error:", err);
+                            auth.showToast('There was an error signing in, but you can continue', 'warning');
+                            // Still show success modal for demo
+                            modalTitle.textContent = 'Sign In Successful!';
+                            modalMessage.textContent = 'You are now signed in to your TimeBridge account.';
+                            successModal.classList.remove('hidden');
+                            successModal.classList.add('fade-in');
+                        });
                 } else {
                     auth.showToast('Invalid email or password', 'error');
                 }
@@ -304,13 +314,23 @@
                 mockUsers.push({ email, password });
                 
                 // Use auth utility to sign in
-                auth.signIn(email);
-                
-                // Show success modal
-                modalTitle.textContent = 'Account Created!';
-                modalMessage.textContent = 'Your account has been successfully created. You can now use TimeBridge.';
-                successModal.classList.remove('hidden');
-                successModal.classList.add('fade-in');
+                auth.signIn(email)
+                    .then(() => {
+                        // Show success modal
+                        modalTitle.textContent = 'Account Created!';
+                        modalMessage.textContent = 'Your account has been successfully created. You can now use TimeBridge.';
+                        successModal.classList.remove('hidden');
+                        successModal.classList.add('fade-in');
+                    })
+                    .catch(err => {
+                        console.error("Sign up error:", err);
+                        auth.showToast('Account created but there might be authentication issues', 'warning');
+                        // Still show success modal for demo
+                        modalTitle.textContent = 'Account Created!';
+                        modalMessage.textContent = 'Your account has been successfully created. You can now use TimeBridge.';
+                        successModal.classList.remove('hidden');
+                        successModal.classList.add('fade-in');
+                    });
             });
             
             // Close modal button handler

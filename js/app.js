@@ -12,6 +12,16 @@ async function fetchMeetings() {
     return Meetings;
 }
 
+async function fetchUser(){
+    let { data: user, error } = await supabase.auth.getUser()
+
+    if (error) {
+        console.error("Error fetching user:", error);
+        return null;
+    }
+    return user;
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
     // Check if the user is authenticated
     const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
@@ -33,6 +43,12 @@ document.addEventListener('DOMContentLoaded', async function () {
     
     // Fetch meetings before initializing the database
     const meetings = await fetchMeetings();
+    const user = await fetchUser();
+
+    if (!user) {
+        window.location.href = '../pages/userAuth.html';
+        return;
+    }
 
     // Now initialize mockDatabase
     const mockDatabase = {

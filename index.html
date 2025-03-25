@@ -321,7 +321,7 @@
             });
             
             // Check if user has "remember me" set
-            const rememberedUser = auth.getRememberedUser();
+            const rememberedUser = auth.getRememberedEmail();
             if (rememberedUser) {
                 const emailInput = document.getElementById('signin-email');
                 if (emailInput) {

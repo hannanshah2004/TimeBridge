@@ -51,8 +51,11 @@ export async function signIn(email, password, rememberMe = false) {
             throw error;
         }
         
+        // Store only the email for "remember me" functionality
         if (rememberMe) {
-            localStorage.setItem('rememberedUser', email);
+            localStorage.setItem('rememberedEmail', email);
+        } else {
+            localStorage.removeItem('rememberedEmail');
         }
         
         return data;
@@ -154,9 +157,9 @@ export async function checkAuth(requireAuth = true) {
     return true;
 }
 
-// Get remembered user, if any
-export function getRememberedUser() {
-    return localStorage.getItem('rememberedUser');
+// Get remembered user email, if any
+export function getRememberedEmail() {
+    return localStorage.getItem('rememberedEmail');
 }
 
 // Show a toast notification

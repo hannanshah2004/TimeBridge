@@ -44,11 +44,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     // Fetch meetings before initializing the database
     const meetings = await fetchMeetings();
     const user = await fetchUser();
-
+    
+    /*
     if (!user) {
         window.location.href = '../pages/userAuth.html';
         return;
     }
+        */
 
     // Now initialize mockDatabase
     const mockDatabase = {

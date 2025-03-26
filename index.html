@@ -147,33 +147,6 @@
                     </form>
                 </div>
 
-                <div class="mt-6">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-gray-50 text-gray-500">
-                                Or continue with
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 grid grid-cols-2 gap-3">
-                        <div>
-                            <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <i class="fab fa-google text-red-500 mr-2"></i>
-                                Google
-                            </a>
-                        </div>
-                        <div>
-                            <a href="#" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                <i class="fab fa-microsoft text-blue-500 mr-2"></i>
-                                Microsoft
-                            </a>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
 
@@ -231,7 +204,7 @@
     <script type="module">
         import * as auth from './js/auth.js';
         
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             const signinContainer = document.getElementById('signin-container');
             const signupContainer = document.getElementById('signup-container');
             const showSignupButton = document.getElementById('show-signup');
@@ -250,15 +223,11 @@
             auth.setupToast();
             
             // Check if already authenticated
-            if (auth.isAuthenticated()) {
+            const isAuth = await auth.isAuthenticated();
+            if (isAuth) {
                 window.location.href = 'dashboard.html';
                 return;
             }
-            
-            // Mock database for authentication
-            const mockUsers = [
-                { email: 'demo@timebridge.com', password: 'password123' }
-            ];
             
             // Toggle between sign in and sign up forms
             showSignupButton.addEventListener('click', function() {
@@ -286,21 +255,19 @@
                     return;
                 }
                 
-                // Check if user exists in mock database
-                const user = mockUsers.find(u => u.email === email && u.password === password);
-                
-                if (user) {
-                    // Use auth utility to sign in
-                    auth.signIn(email, rememberMe);
-                    
-                    // Show success modal
-                    modalTitle.textContent = 'Sign In Successful!';
-                    modalMessage.textContent = 'You are now signed in to your TimeBridge account.';
-                    successModal.classList.remove('hidden');
-                    successModal.classList.add('fade-in');
-                } else {
-                    auth.showToast('Invalid email or password', 'error');
-                }
+                // Sign in with Supabase
+                auth.signIn(email, password, rememberMe)
+                    .then(() => {
+                        // Show success modal
+                        modalTitle.textContent = 'Sign In Successful!';
+                        modalMessage.textContent = 'You are now signed in to your TimeBridge account.';
+                        successModal.classList.remove('hidden');
+                        successModal.classList.add('fade-in');
+                    })
+                    .catch(err => {
+                        console.error("Sign in error:", err);
+                        auth.showToast('Invalid email or password', 'error');
+                    });
             });
             
             // Sign Up form submission
@@ -321,23 +288,23 @@
                     return;
                 }
                 
-                // Check if user already exists
-                if (mockUsers.some(u => u.email === email)) {
-                    auth.showToast('User with this email already exists', 'error');
-                    return;
-                }
-                
-                // Add user to mock database
-                mockUsers.push({ email, password });
-                
-                // Use auth utility to sign in
-                auth.signIn(email);
-                
-                // Show success modal
-                modalTitle.textContent = 'Account Created!';
-                modalMessage.textContent = 'Your account has been successfully created. You can now use TimeBridge.';
-                successModal.classList.remove('hidden');
-                successModal.classList.add('fade-in');
+                // Sign up with Supabase
+                auth.signUp(email, password)
+                    .then(() => {
+                        // Show success modal
+                        modalTitle.textContent = 'Account Created!';
+                        modalMessage.textContent = 'Your account has been successfully created. You can now use TimeBridge.';
+                        successModal.classList.remove('hidden');
+                        successModal.classList.add('fade-in');
+                    })
+                    .catch(err => {
+                        console.error("Sign up error:", err);
+                        if (err.message && err.message.includes("already registered")) {
+                            auth.showToast('User with this email already exists', 'error');
+                        } else {
+                            auth.showToast('Error creating account', 'error');
+                        }
+                    });
             });
             
             // Close modal button handler
@@ -354,7 +321,7 @@
             });
             
             // Check if user has "remember me" set
-            const rememberedUser = auth.getRememberedUser();
+            const rememberedUser = auth.getRememberedEmail();
             if (rememberedUser) {
                 const emailInput = document.getElementById('signin-email');
                 if (emailInput) {

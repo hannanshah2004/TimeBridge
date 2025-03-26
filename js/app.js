@@ -1,4 +1,5 @@
 import supabase from "./supabaseClient.js";
+import * as auth from "./auth.js";
 
 async function fetchMeetings() {
     let { data: Meetings, error } = await supabase.from('Meetings').select('*');
@@ -23,8 +24,8 @@ async function fetchUser(){
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
-    // Check if the user is authenticated
-    const isAuthenticated = sessionStorage.getItem('isAuthenticated') === 'true';
+    // Check if the user is authenticated using Supabase
+    const isAuthenticated = await auth.isAuthenticated();
     
     // If on login page, don't continue with app initialization
     if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
@@ -108,16 +109,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     };
 
     // Initialize application only after `mockDatabase` is ready
-    initApplication(mockDatabase);
+    await initApplication(mockDatabase);
     console.log('TimeBridge app initialized!');
 });
 
 // Modify `initApplication` to accept `mockDatabase`
-function initApplication(mockDatabase) {
+async function initApplication(mockDatabase) {
     window.mockDatabase = mockDatabase; // Make it globally accessible if needed
     
-    // User data from authentication
-    const userEmail = sessionStorage.getItem('userEmail');
+    // Get user email from Supabase auth
+    const userEmail = await auth.getUserEmail();
     
     // Check if we're on the dashboard page
     if (window.location.pathname.includes('dashboard.html')) {
@@ -130,7 +131,7 @@ function initApplication(mockDatabase) {
         if (userEmail) {
             const userInitials = document.getElementById('user-initials');
             if (userInitials) {
-                const initials = userEmail.split('@')[0].substring(0, 2).toUpperCase();
+                const initials = await auth.getUserInitials(userEmail);
                 userInitials.textContent = initials;
             }
         }

@@ -1,0 +1,96 @@
+@startuml TimeBridge Domain Model
+
+' Define the entities (classes)
+class User {
+  +id: UUID
+  +email: String
+  +password: String (hashed)
+  +createdAt: DateTime
+  +lastSignIn: DateTime
+  +getAvailability(): AvailabilitySlot[]
+}
+
+class Profile {
+  +userId: UUID
+  +fullName: String
+  +avatarUrl: String
+  +timeZone: String
+  +availabilityRules: JSON
+}
+
+class Meeting {
+  +id: UUID
+  +title: String
+  +description: String
+  +startTime: DateTime
+  +endTime: DateTime
+  +status: Enum [pending, approved, canceled]
+  +createdAt: DateTime
+  +updatedAt: DateTime
+  +approve(): void
+  +cancel(): void
+  +reschedule(newStart, newEnd): void
+}
+
+class MeetingParticipant {
+  +id: UUID
+  +meetingId: UUID
+  +name: String
+  +email: String
+  +role: Enum [host, requester, attendee]
+  +joinedAt: DateTime
+}
+
+class AvailabilitySlot {
+  +id: UUID
+  +userId: UUID
+  +dayOfWeek: Enum [0-6]
+  +startTime: Time
+  +endTime: Time
+  +isRecurring: Boolean
+  +recurrenceRule: String
+  +exceptionDates: Date[]
+}
+
+class ScheduleLink {
+  +id: UUID
+  +userId: UUID
+  +slug: String
+  +createdAt: DateTime
+  +expiresAt: DateTime
+  +isActive: Boolean
+  +generateUrl(): String
+}
+
+' Define services
+class AuthenticationService << service >> {
+  +signUp(email, password): User
+  +signIn(email, password): Session
+  +signOut(): void
+  +resetPassword(email): void
+  +isAuthenticated(): Boolean
+  +getUser(): User
+}
+
+class SchedulingService << service >> {
+  +requestMeeting(hostId, requesterInfo, title, startTime, endTime): Meeting
+  +updateMeetingStatus(meetingId, status): Meeting
+  +getMeetings(userId, filters): Meeting[]
+  +checkAvailability(userId, startTime, endTime): Boolean
+  +getAvailableTimeSlots(userId, date): TimeSlot[]
+  +notifyParticipants(meetingId, notificationType): void
+}
+
+' Define relationships
+User "1" -- "1" Profile : has
+User "1" -- "*" Meeting : hosts
+User "1" -- "*" AvailabilitySlot : defines
+User "1" -- "1" ScheduleLink : has
+
+Meeting "1" -- "*" MeetingParticipant : includes
+
+AuthenticationService -- User : manages
+SchedulingService -- Meeting : manages
+SchedulingService -- AvailabilitySlot : uses
+
+@enduml

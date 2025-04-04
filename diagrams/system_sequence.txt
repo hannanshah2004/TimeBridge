@@ -1,0 +1,47 @@
+@startuml Meeting Request System Sequence Diagram
+
+actor "External User" as Requester
+participant "Frontend" as Frontend
+participant "Backend API" as Backend
+participant "Supabase" as Supabase
+participant "Email Service" as EmailService
+
+title System Sequence Diagram: UC-12 Public Meeting Request
+
+== Accessing Schedule Link ==
+
+Requester -> Frontend: Visit schedule link\n(GET /schedule/{slug})
+Frontend -> Backend: Get host availability\n(GET /public/schedule/{slug})
+Backend -> Supabase: Query schedule_links table
+Supabase --> Backend: Return schedule link data
+Backend -> Supabase: Query availability_slots table
+Supabase --> Backend: Return availability slots
+Backend -> Supabase: Query meetings table for conflicts
+Supabase --> Backend: Return existing meetings
+Backend --> Frontend: Return available time slots
+Frontend --> Requester: Display available time slots
+
+== Selecting Time and Submitting Request ==
+
+Requester -> Frontend: Select time slot and fill meeting details
+Requester -> Frontend: Submit meeting request
+Frontend -> Backend: Create meeting request\n(POST /public/schedule/{slug}/request)
+Backend -> Supabase: Check schedule link is valid and active
+Supabase --> Backend: Confirm link validity
+Backend -> Supabase: Check for time conflicts
+Supabase --> Backend: Confirm no conflicts
+Backend -> Supabase: Insert new meeting record
+Supabase --> Backend: Return created meeting ID
+Backend -> Supabase: Insert participant records
+Supabase --> Backend: Confirm participants added
+
+== Notification ==
+
+Backend -> EmailService: Send notification to host
+EmailService --> Backend: Confirm email sent
+Backend -> EmailService: Send confirmation to requester
+EmailService --> Backend: Confirm email sent
+Backend --> Frontend: Return creation success response
+Frontend --> Requester: Display confirmation message
+
+@enduml

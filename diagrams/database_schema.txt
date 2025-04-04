@@ -1,0 +1,83 @@
+@startuml TimeBridge Database Schema
+
+' Define tables with fields and data types
+entity "auth.users" {
+  * id: uuid <<PK>>
+  --
+  email: text
+  encrypted_password: text
+  created_at: timestamptz
+  last_sign_in_at: timestamptz
+  confirmation_token: text
+  reset_password_token: text
+}
+
+entity "profiles" {
+  * id: uuid <<PK>>
+  --
+  * user_id: uuid <<FK>>
+  full_name: text
+  avatar_url: text
+  time_zone: text
+  availability_rules: jsonb
+  created_at: timestamptz
+  updated_at: timestamptz
+}
+
+entity "meetings" {
+  * id: uuid <<PK>>
+  --
+  * host_user_id: uuid <<FK>>
+  title: text
+  description: text
+  * start_time: timestamptz
+  * end_time: timestamptz
+  * status: text
+  color: text
+  * created_at: timestamptz
+  * updated_at: timestamptz
+}
+
+entity "meeting_participants" {
+  * id: uuid <<PK>>
+  --
+  * meeting_id: uuid <<FK>>
+  * name: text
+  * email: text
+  * role: text
+  joined_at: timestamptz
+}
+
+entity "availability_slots" {
+  * id: uuid <<PK>>
+  --
+  * user_id: uuid <<FK>>
+  * day_of_week: smallint
+  * start_time: time
+  * end_time: time
+  is_recurring: boolean
+  recurrence_rule: text
+  exception_dates: date[]
+  created_at: timestamptz
+  updated_at: timestamptz
+}
+
+entity "schedule_links" {
+  * id: uuid <<PK>>
+  --
+  * user_id: uuid <<FK>>
+  * slug: text
+  * created_at: timestamptz
+  expires_at: timestamptz
+  is_active: boolean
+}
+
+' Define relationships
+"auth.users" ||--|{ "profiles" : has
+"auth.users" ||--|{ "meetings" : hosts
+"auth.users" ||--|{ "availability_slots" : defines
+"auth.users" ||--|{ "schedule_links" : has
+
+"meetings" ||--|{ "meeting_participants" : includes
+
+@enduml

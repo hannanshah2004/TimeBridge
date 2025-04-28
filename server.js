@@ -3,6 +3,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
 const axios = require('axios'); // For making HTTP requests to WeatherAPI
+const cors = require('cors'); // Add CORS middleware
 const { createClient } = require('@supabase/supabase-js');
 
 // Load environment variables from .env file
@@ -27,6 +28,7 @@ const app = express();
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // --- Middleware ---
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.static(path.join(__dirname, '.'))); // Serve static files (HTML, CSS, JS) from the root directory
 
@@ -219,9 +221,19 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Serve other HTML files directly if requested
-app.get('/*.html', (req, res) => {
-    const filePath = path.join(__dirname, req.path);
+// Serve dashboard.html
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+// Serve booking.html
+app.get('/booking', (req, res) => {
+    res.sendFile(path.join(__dirname, 'booking.html'));
+});
+
+// Serve other HTML files directly if requested (using named parameters instead of wildcards)
+app.get('/:page.html', (req, res) => {
+    const filePath = path.join(__dirname, `${req.params.page}.html`);
     res.sendFile(filePath, (err) => {
         if (err) {
             // If file doesn't exist, send 404
@@ -230,9 +242,14 @@ app.get('/*.html', (req, res) => {
     });
 });
 
-// Optional: Handle 404 for API routes not found
-app.use('/api/*', (req, res) => {
-    res.status(404).json({ error: { message: 'API endpoint not found' } });
+// Handle 404 for API routes not found - Using a regular middleware instead of a route with a wildcard
+app.use((req, res, next) => {
+    // Check if the request is for an API endpoint
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: { message: 'API endpoint not found' } });
+    }
+    // Continue to next middleware for non-API routes
+    next();
 });
 
 // --- Start Server ---

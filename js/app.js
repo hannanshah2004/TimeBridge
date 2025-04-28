@@ -1,5 +1,6 @@
 import supabase from "./supabaseClient.js";
 import * as auth from "./auth.js";
+import WeatherComponent from './components/weather.js';
 
 async function fetchMeetings() {
     let { data: Meetings, error } = await supabase.from('Meetings').select('*');
@@ -253,15 +254,18 @@ function updateActiveNavLink(viewName) {
 
 // Load dashboard view
 function loadDashboard() {
-    // In a real app, this would be a component
     const mainContent = document.getElementById('main-content');
     if (!mainContent) return;
     
-    // For now, use original dashboard content
     mainContent.innerHTML = `
         <div id="dashboard-view" class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <h2 class="text-2xl font-semibold text-gray-900 mb-6">Dashboard</h2>
+                
+                <!-- Weather Widget Container -->
+                <div id="weather-container" class="mb-6">
+                    <!-- Weather content will be loaded here by JS -->
+                </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Upcoming Meetings Card -->
@@ -269,8 +273,8 @@ function loadDashboard() {
                         <div class="px-4 py-5 sm:p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-medium text-gray-900">Upcoming Meetings</h3>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
-                                    3 upcoming
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800" id="upcoming-meetings-count">
+                                    Loading...
                                 </span>
                             </div>
                             <div class="space-y-3" id="upcoming-meetings-list">
@@ -285,7 +289,7 @@ function loadDashboard() {
                             <h3 class="text-lg font-medium text-gray-900 mb-4">Share Your Schedule</h3>
                             <p class="text-sm text-gray-500 mb-4">Allow others to book time with you by sharing your schedule link.</p>
                             <div class="relative mt-1 flex items-center">
-                                <input type="text" disabled class="form-input block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="https://TimeBridge.example/u/johndoe">
+                                <input type="text" readonly class="form-input block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="https://TimeBridge.example/u/johndoe" id="schedule-link-input">
                                 <button id="copy-schedule-link" class="ml-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                     <i class="fa-regular fa-copy mr-2"></i> Copy
                                 </button>
@@ -297,7 +301,16 @@ function loadDashboard() {
         </div>
     `;
     
-    // Load meetings data
+    // Initialize Weather Widget after container is added to DOM
+    const weatherContainer = document.getElementById('weather-container');
+    if (weatherContainer) {
+        const weatherWidget = new WeatherComponent(weatherContainer);
+        weatherWidget.init();
+    } else {
+        console.error('Weather container not found after loading dashboard view.');
+    }
+    
+    // Load meetings data and setup other dashboard elements
     loadUpcomingMeetings();
     setupCopyScheduleLink();
 }
@@ -368,12 +381,15 @@ function initCalendar() {
 // Load upcoming meetings in the dashboard
 function loadUpcomingMeetings() {
     const meetingsList = document.getElementById('upcoming-meetings-list');
-    if (!meetingsList) return;
+    const countSpan = document.getElementById('upcoming-meetings-count');
+    
+    if (!meetingsList || !countSpan) return;
     
     const upcomingMeetings = mockDatabase.getUpcomingMeetings();
     
     if (upcomingMeetings.length === 0) {
         meetingsList.innerHTML = '<p class="text-gray-500 text-center py-4">No upcoming meetings</p>';
+        countSpan.textContent = '0 upcoming';
         return;
     }
     
@@ -420,21 +436,20 @@ function loadUpcomingMeetings() {
     }).join('');
     
     // Update counter
-    const counter = document.querySelector('.bg-indigo-100.text-indigo-800');
-    if (counter) {
-        counter.textContent = `${upcomingMeetings.length} upcoming`;
-    }
+    countSpan.textContent = `${upcomingMeetings.length} upcoming`;
 }
 
 // Setup copy schedule link functionality
 function setupCopyScheduleLink() {
     const copyButton = document.getElementById('copy-schedule-link');
-    if (!copyButton) return;
+    const linkInput = document.getElementById('schedule-link-input');
+
+    if (!copyButton || !linkInput) {
+        console.error('Copy schedule link button or input not found.');
+        return;
+    }
     
     copyButton.addEventListener('click', function() {
-        const linkInput = this.parentElement.querySelector('input');
-        if (!linkInput) return;
-        
         // Copy to clipboard
         navigator.clipboard.writeText(linkInput.value).then(function() {
             showToast('Schedule link copied to clipboard!', 'success');

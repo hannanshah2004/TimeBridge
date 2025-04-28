@@ -209,7 +209,6 @@
     <!-- Authentication Script -->
     <script type="module">
         import * as auth from './js/auth.js';
-        import WeatherComponent from './js/components/weather.js';
         
         document.addEventListener('DOMContentLoaded', async function() {
             // Initialize authentication
@@ -220,40 +219,7 @@
             
             // Setup toast notifications
             auth.setupToast();
-            
-            // Initialize weather widget
-            const weatherContainer = document.getElementById('weather-container');
-            if (weatherContainer) {
-                const weatherWidget = new WeatherComponent(weatherContainer);
-                weatherWidget.init();
-            }
-            
-            // Setup the copy schedule link button
-            const copyLinkButton = document.getElementById('copy-schedule-link');
-            if (copyLinkButton) {
-                copyLinkButton.addEventListener('click', function() {
-                    const linkInput = this.previousElementSibling;
-                    if (linkInput) {
-                        linkInput.select();
-                        document.execCommand('copy');
-                        window.showToast('Schedule link copied to clipboard!', 'success');
-                    }
-                });
-            }
-            
-            // Setup modal close button
-            document.getElementById('close-modal')?.addEventListener('click', function() {
-                document.getElementById('meeting-modal').classList.add('hidden');
-            });
         });
-        
-        // Expose functions for buttons
-        window.showMeetingModal = function(meetingId) {
-            const modal = document.getElementById('meeting-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-            }
-        };
     </script>
 </body>
 </html> 

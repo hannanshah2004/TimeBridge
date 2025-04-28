@@ -18,38 +18,7 @@ class CalendarComponent {
                         <h1 class="text-3xl font-bold tracking-tight">Calendar</h1>
                         <p class="text-gray-500">Schedule new meetings and manage your availability</p>
                     </div>
-                <!-- 5-Day Weather Forecast Section -->
-                <div class="flex items-center gap-4">
-                    <div class="weather-forecast-container flex items-center gap-1 rounded-lg bg-gray-100 px-2 py-1">
-                        ${[0, 1, 2, 3, 4].map(day => `
-                            <div class="weather-day flex flex-col items-center px-2 py-1 rounded hover:bg-gray-200 transition-colors">
-                                <div class="text-xs font-medium text-gray-600">
-                                    ${this.getDayName(day)}
-                                </div>
-                                <div class="weather-icon text-xl">
-                                    <span class="weather-icon-placeholder">☀️</span>
-                                </div>
-                                <div class="text-sm font-semibold weather-temp">
-                                    <span class="temp-placeholder">72°</span>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
 
-                    <div class="flex items-center gap-2">
-                        <div class="relative">
-                            <button class="copy-link group relative flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                                <span>Copy My Schedule Link</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c0-1.1.9-2 2-2h2"/><path d="M4 12c0-1.1.9-2 2-2h2"/><path d="M4 8c0-1.1.9-2 2-2h2"/></svg>
-                                
-                                <span class="copy-tooltip absolute -bottom-8 left-1/2 -translate-x-1/2 transform rounded bg-black px-2 py-1 text-xs text-white">
-                                    Link copied!
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
                     <div class="flex items-center gap-2">
                         <div class="relative">
                             <button class="copy-link group relative flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">

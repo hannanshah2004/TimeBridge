@@ -96,18 +96,30 @@ class WeatherApiClient extends BaseApiClient {
     }
 
     /**
-     * Get current weather data based on user's location (IP address detected by backend).
+     * Get current weather data based on user's location (IP address detected by backend)
+     * or for a specific location query.
+     * 
+     * @param {string} [location] - Optional location query (ZIP code, city name, etc.)
+     * @returns {Promise<object>} - Weather data
      */
-    async getCurrentWeather() {
-        return this.get('weather/current');
+    async getCurrentWeather(location) {
+        const params = location ? { q: location } : {};
+        return this.get('weather/current', params);
     }
 
     /**
      * Get forecast data.
-     * @param {number} days - Number of days for forecast (1-14).
+     * 
+     * @param {string} [location] - Optional location query (ZIP code, city name, etc.)
+     * @param {number} [days=1] - Number of days for forecast (1-14).
+     * @returns {Promise<object>} - Forecast data
      */
-    async getForecast(days = 1) {
-        return this.get('weather/forecast', { days });
+    async getForecast(location, days = 1) {
+        const params = { days };
+        if (location) {
+            params.q = location;
+        }
+        return this.get('weather/forecast', params);
     }
 }
 

@@ -5,7 +5,6 @@ class CalendarComponent {
         this.mainContainer = document.getElementById('main-content');
         this.selectedDate = new Date();
         this.selectedTime = null;
-        this.weatherData = null;
     }
 
     render() {
@@ -146,90 +145,7 @@ class CalendarComponent {
                     </div>
                 </div>
             </div>
-        `;
-
-        // Setup event listeners after rendering
-        this.setupEventListeners();
-            // Fetch weather data
-        this.updateWeather();
-        }
-
-    async getUserLocation() {
-        return new Promise((resolve, reject) => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    resolve,
-                    () => reject(new Error('Location access denied')),
-                    { timeout: 5000 }
-                );
-            } else {
-                reject(new Error('Geolocation not supported'));
-            }
-        });
-    }
-    async fetchWeatherForecast() {
-        try {
-            // 1. Get user location
-            const position = await this.getUserLocation();
-            const { latitude, longitude } = position.coords;
-            
-            // 2. Fetch weather using coordinates
-            const response = await fetch(
-              `https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&units=imperial&appid=90bf32f206c06bcf7460e8d930da69cb`
-            );
-            
-            if (!response.ok) throw new Error('Weather request failed');
-            
-            const data = await response.json();
-            return data;
-            
-          } catch (error) {
-            console.error('Error getting weather:', error);
-          }
-        }
-        updateWeatherForecastDisplay(forecastData) {
-            const weatherDays = this.mainContainer.querySelectorAll('.weather-day');
-            if (!weatherDays.length) return;
-        
-            // Group forecast by day (OpenWeatherMap provides 3-hour intervals)
-            const dailyForecasts = {};
-            forecastData.list.forEach(item => {
-                const date = new Date(item.dt * 1000).toLocaleDateString();
-                if (!dailyForecasts[date]) {
-                    dailyForecasts[date] = [];
-                }
-                dailyForecasts[date].push(item);
-            });
-        
-            // Get the next 5 days (skip today if you want)
-            const forecastDates = Object.keys(dailyForecasts).slice(0, 5);
-            
-            // Update each day's display
-            forecastDates.forEach((date, index) => {
-                if (index >= weatherDays.length) return;
-                
-                const dayForecasts = dailyForecasts[date];
-                const avgTemp = Math.round(dayForecasts.reduce((sum, item) => sum + item.main.temp, 0) / dayForecasts.length);
-                const weatherIcon = dayForecasts[0].weather[0].icon; // Use first period's icon
-                
-                const weatherDay = weatherDays[index];
-                weatherDay.querySelector('.weather-icon-placeholder').innerHTML = 
-                    `<img src="https://openweathermap.org/img/wn/${weatherIcon}.png" alt="${dayForecasts[0].weather[0].description}" />`;
-                weatherDay.querySelector('.temp-placeholder').textContent = `${Math.round(avgTemp)}°`;
-            });
-        }
-    async updateWeather(){
-        try {
-            const forecastData = await this.fetchWeatherForecast();
-            this.updateWeatherForecastDisplay(forecastData);
-          } catch (error) {
-            console.error('Weather update failed:', error);
-            // Show error state to user
-            this.showWeatherError();
-          } finally {
-            this.toggleWeatherLoading(false);
-          }
-    }
+        `;}
     
     getDayName(dayOffset) {
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

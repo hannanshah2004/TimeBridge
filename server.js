@@ -207,6 +207,11 @@ app.put('/api/meetings/:id', async (req, res) => {
     }
 });
 
+app.get('/schedule/:slug', (req, res) => {
+  // always serve the booking.html shell
+  res.sendFile(path.join(__dirname, 'booking.html'))
+})
+
 // --- HTML Serving (Catch-all for SPA or direct file access) ---
 
 // Serve index.html for the root path

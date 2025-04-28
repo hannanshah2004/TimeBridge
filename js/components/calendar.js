@@ -21,7 +21,7 @@ class CalendarComponent {
                     <div class="flex items-center gap-2">
                         <div class="relative">
                             <button class="copy-link group relative flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                                <span>Copy My Schedule Link</span>
+                                <span>Share My Schedule</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c0-1.1.9-2 2-2h2"/><path d="M4 12c0-1.1.9-2 2-2h2"/><path d="M4 8c0-1.1.9-2 2-2h2"/></svg>
                                 
                                 <span class="copy-tooltip absolute -bottom-8 left-1/2 -translate-x-1/2 transform rounded bg-black px-2 py-1 text-xs text-white">
@@ -302,6 +302,33 @@ class CalendarComponent {
 
     // Setup event listeners for the calendar component
     setupEventListeners() {
+        const copyBtn = this.mainContainer.querySelector('.copy-link')
+        const tooltip = this.mainContainer.querySelector('.copy-tooltip')
+        if (copyBtn && tooltip) {
+            copyBtn.addEventListener('click', async () => {
+            // 1) get current user
+            const { data:{ user }, error:userErr } = await supabase.auth.getUser()
+            if (userErr || !user) {
+                window.showToast('Please sign in first','error')
+                return
+            }
+            // 2) upsert a slug in your new table
+            const slug = user.id      // or generate e.g. nanoid()
+            await supabase
+                .from('schedule_links')
+                .upsert({ user_id: user.id, slug })
+            // 3) build & copy the share URL
+            const shareUrl = `${location.origin}/schedule/${slug}`
+            try {
+                await navigator.clipboard.writeText(shareUrl)
+                tooltip.classList.add('opacity-100')
+                setTimeout(() => tooltip.classList.remove('opacity-100'), 2000)
+            } catch {
+                window.showToast('Copy failed','error')
+            }
+            })
+        }
+
         // Calendar day click
         document.querySelectorAll('.calendar-day').forEach(dayEl => {
             dayEl.addEventListener('click', (e) => {
@@ -474,9 +501,9 @@ class CalendarComponent {
         }
         
         // Copy schedule link functionality
-        const copyBtn = document.querySelector('.copy-link');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
+        const copyB = document.querySelector('.copy-link');
+        if (copyB) {
+            copyB.addEventListener('click', () => {
                 navigator.clipboard.writeText('https://TimeBridge.example/u/johndoe')
                     .then(() => {
                         window.showToast('Schedule link copied to clipboard!', 'success');

@@ -113,6 +113,16 @@ class CalendarComponent {
                                     placeholder="you@example.com"
                                 />
                             </div>
+
+                            <div>
+                                <label for="attendees-email" class="mb-1 block text-sm font-medium">Attendee Email(s)</label>
+                                <input 
+                                    type="text" 
+                                    id="attendees-email" 
+                                    class="w-full rounded-md border px-3 py-2"
+                                    placeholder="a@example.com, b@example.com"
+                                />
+                            </div>
                             
                             <div>
                                 <label for="purpose" class="mb-1 block text-sm font-medium">Meeting Purpose</label>
@@ -506,6 +516,7 @@ class CalendarComponent {
                 const nameInput = document.getElementById('name');
                 const emailInput = document.getElementById('email');
                 const purposeInput = document.getElementById('purpose');
+                const attendeesInput = document.getElementById('attendees-email');
                 
                 if (!nameInput.value || !emailInput.value) {
                     window.showToast('Please fill out all required fields', 'warning');
@@ -533,6 +544,7 @@ class CalendarComponent {
                     end: endDate,
                     requesterName: nameInput.value,
                     requesterEmail: emailInput.value,
+                    attendees: attendeesInput.value.split(',').map(email => email.trim()),
                     description: purposeInput.value
                 };
                 
@@ -541,9 +553,7 @@ class CalendarComponent {
                 if (added) {
                     window.showToast('Meeting request submitted successfully!', 'success');
                     meetingForm.reset();
-                    
-                    // In a real app, we might redirect or show a confirmation page
-                }
+                                    }
             });
         }
         

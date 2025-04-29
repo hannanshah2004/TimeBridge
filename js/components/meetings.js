@@ -136,10 +136,6 @@ export default class MeetingsComponent {
                     
                     ${meeting.status !== 'canceled' ? `
                     <div class="flex gap-2">
-                        <button class="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50 join-meeting-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
-                            Join Meeting
-                        </button>
                         <button class="rounded-md border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 cancel-meeting-btn">Cancel</button>
                     </div>
                     ` : ''}

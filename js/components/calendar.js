@@ -315,6 +315,7 @@ export default class CalendarComponent {
         const emailInput = document.getElementById('email');
         const purposeInput = document.getElementById('purpose');
         const attendeesInput = document.getElementById('attendees-email');
+        const locationInput = document.getElementById('location');
         
         if (!this.selectedTime) {
             window.showToast('Please select a time slot first', 'warning');
@@ -353,7 +354,8 @@ export default class CalendarComponent {
             end: endDate.toISOString(),     // Use ISO string for Supabase timestamp
             requesterName: nameInput.value,
             requesterEmail: emailInput.value,
-            attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input
+            attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input,
+            meetingLocation: locationInput.value,
             description: purposeInput.value,
             status: 'pending', // Add default status
             color: '#f59e0b'  // Add default color
@@ -586,7 +588,7 @@ export default class CalendarComponent {
             });
         }
 
-        const locationInput = document.getElementById('location');
+    const locationInput = document.getElementById('location');
     const suggBox       = document.getElementById('location-suggestions');
     if (locationInput && suggBox) {
       let debounceTimer = null;

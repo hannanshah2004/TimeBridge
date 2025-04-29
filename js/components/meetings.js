@@ -136,10 +136,6 @@ export default class MeetingsComponent {
                     
                     ${meeting.status !== 'canceled' ? `
                     <div class="flex gap-2">
-                        <button class="flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50 join-meeting-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-video"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
-                            Join Meeting
-                        </button>
                         <button class="rounded-md border px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 cancel-meeting-btn">Cancel</button>
                     </div>
                     ` : ''}
@@ -172,18 +168,32 @@ export default class MeetingsComponent {
             });
         });
 
-        // Cancel meeting button click handlers
+        // Cancel meeting button click handlers (Update status)
         document.querySelectorAll('.cancel-meeting-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            // Make the listener async
+            btn.addEventListener('click', async (e) => { 
                 e.stopPropagation();
-                const meetingId = parseInt(btn.closest('.meeting-card').dataset.meetingId);
+                const meetingCard = btn.closest('.meeting-card');
+                if (!meetingCard) return;
+                const meetingId = parseInt(meetingCard.dataset.meetingId);
+                
                 if (meetingId) {
-                    // Use the existing cancel meeting function
-                    const cancelled = this.database.updateMeeting(meetingId, { status: 'canceled' });
-                    if (cancelled) {
+                    console.log(`[MeetingsComponent] Cancel button clicked for ID: ${meetingId}`);
+                    
+                    // Call the async updateMeeting function and wait for it
+                    const updatedMeeting = await this.database.updateMeeting(meetingId, { status: 'canceled' });
+                    
+                    // Check if the update was successful (updateMeeting returns the updated meeting or null)
+                    if (updatedMeeting) { 
                         window.showToast('Meeting cancelled successfully', 'success');
-                        // Refresh the meetings view
-                        this.render();
+                        // Re-render this component's view AFTER the update is complete
+                        console.log('[MeetingsComponent] Re-rendering meetings view after cancellation.');
+                        this.render(); 
+                    } else {
+                        // updateMeeting handles its own errors/toasts, but we can add one here if needed
+                        console.error('[MeetingsComponent] Failed to cancel meeting via updateMeeting.');
+                        // Optionally show a generic error toast here if updateMeeting failed silently
+                        // window.showToast('Failed to cancel meeting.', 'error');
                     }
                 }
             });

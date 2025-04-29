@@ -7,6 +7,8 @@ export default class CalendarComponent {
         this.mainContainer = document.getElementById('main-content');
         this.selectedDate = new Date();
         this.selectedTime = null;
+        this.submitHandler = null; // Property to hold the bound event listener
+        this.meetingForm = null;   // Property to hold the form element reference
     }
 
     render() {
@@ -284,8 +286,110 @@ export default class CalendarComponent {
         return [4, 10, 15, 22, 28];
     }
 
+    // Define the submit handler as a class method
+    async _handleFormSubmit(e) {
+        e.preventDefault();
+        console.log('Form submit handler triggered.'); // Add log here
+        
+        // Get the submit button (assuming this.meetingForm is set)
+        const submitButton = this.meetingForm ? this.meetingForm.querySelector('button[type="submit"]') : null;
+
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const purposeInput = document.getElementById('purpose');
+        const attendeesInput = document.getElementById('attendees-email');
+        
+        if (!this.selectedTime) {
+            window.showToast('Please select a time slot first', 'warning');
+            return;
+        }
+
+        if (!nameInput.value || !emailInput.value) {
+            window.showToast('Please fill out your name and email', 'warning');
+            return;
+        }
+        
+        // Disable button
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+        }
+        
+        // Create a new meeting request
+        const [hours, minutes] = this.selectedTime.match(/(\d+):(\d+)/).slice(1);
+        const isPM = this.selectedTime.includes('PM');
+        
+        const meetingDate = new Date(this.selectedDate);
+        meetingDate.setHours(
+            isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours),
+            parseInt(minutes),
+            0,
+            0
+        );
+        
+        const endDate = new Date(meetingDate);
+        endDate.setMinutes(endDate.getMinutes() + 30); // 30 min meeting by default
+        
+        const newMeetingData = {
+            title: purposeInput.value || 'Meeting',
+            start: meetingDate.toISOString(), // Use ISO string for Supabase timestamp
+            end: endDate.toISOString(),     // Use ISO string for Supabase timestamp
+            requesterName: nameInput.value,
+            requesterEmail: emailInput.value,
+            attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input
+            description: purposeInput.value,
+            status: 'pending', // Add default status
+            color: '#f59e0b'  // Add default color
+        };
+        
+        try {
+            const { data: insertedMeetings, error } = await supabase
+                .from('Meetings')
+                .insert([newMeetingData])
+                .select();
+
+            if (error) throw error;
+
+            if (insertedMeetings && insertedMeetings.length > 0) {
+                // Add the newly created meeting to the local mockDatabase
+                // Convert start/end back to Date objects if necessary for mockDatabase consistency
+                const newMeetingForMockDb = {
+                    ...insertedMeetings[0],
+                    start: new Date(insertedMeetings[0].start),
+                    end: new Date(insertedMeetings[0].end)
+                };
+                if (window.mockDatabase && window.mockDatabase.meetings) {
+                    window.mockDatabase.meetings.push(newMeetingForMockDb);
+                    // Optionally, refresh parts of the UI if needed immediately
+                    // e.g., if calendar view needs updating: this.renderCalendarDays(); this.renderTimeSlots();
+                }
+                
+                window.showToast('Meeting request submitted successfully!', 'success');
+                this.meetingForm.reset(); // Use stored form reference
+                this.selectedTime = null;
+                const timeSlotsContainer = document.getElementById('time-slots');
+                if (timeSlotsContainer) {
+                     timeSlotsContainer.innerHTML = this.renderTimeSlots();
+                     this.setupTimeSlotListeners();
+                }
+            } else {
+                 window.showToast('Failed to submit meeting request.', 'error');
+            }
+        } catch (error) {
+            console.error('Error submitting meeting:', error);
+            window.showToast(`Error: ${error.message || 'Failed to submit meeting request.'}`, 'error');
+        } finally {
+            // Re-enable button
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Confirm Meeting Request';
+            }
+        }
+    }
+
     // Setup event listeners for the calendar component
     setupEventListeners() {
+        console.log('[CalendarComponent] Setting up event listeners...'); // Log setup calls
         const copyBtn = this.mainContainer.querySelector('.copy-link')
         const tooltip = this.mainContainer.querySelector('.copy-tooltip')
         if (copyBtn && tooltip) {
@@ -434,96 +538,21 @@ export default class CalendarComponent {
             });
         }
         
-        // Meeting form submission
-        const meetingForm = document.getElementById('meeting-form');
-        if (meetingForm) {
-            meetingForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const nameInput = document.getElementById('name');
-                const emailInput = document.getElementById('email');
-                const purposeInput = document.getElementById('purpose');
-                const attendeesInput = document.getElementById('attendees-email');
-                
-                if (!this.selectedTime) {
-                    window.showToast('Please select a time slot first', 'warning');
-                    return;
-                }
-
-                if (!nameInput.value || !emailInput.value) {
-                    window.showToast('Please fill out your name and email', 'warning');
-                    return;
-                }
-                
-                // Create a new meeting request
-                const [hours, minutes] = this.selectedTime.match(/(\d+):(\d+)/).slice(1);
-                const isPM = this.selectedTime.includes('PM');
-                
-                const meetingDate = new Date(this.selectedDate);
-                meetingDate.setHours(
-                    isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours),
-                    parseInt(minutes),
-                    0,
-                    0
-                );
-                
-                const endDate = new Date(meetingDate);
-                endDate.setMinutes(endDate.getMinutes() + 30); // 30 min meeting by default
-                
-                const newMeetingData = {
-                    title: purposeInput.value || 'Meeting',
-                    start: meetingDate.toISOString(), // Use ISO string for Supabase timestamp
-                    end: endDate.toISOString(),     // Use ISO string for Supabase timestamp
-                    requesterName: nameInput.value,
-                    requesterEmail: emailInput.value,
-                    attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input
-                    description: purposeInput.value,
-                    status: 'pending', // Add default status
-                    color: '#f59e0b'  // Add default color
-                };
-                
-                // Insert into Supabase database
-                try {
-                    const { data: insertedMeetings, error } = await supabase
-                        .from('Meetings')
-                        .insert([newMeetingData])
-                        .select(); // Select the inserted row to get its ID
-
-                    if (error) {
-                        throw error;
-                    }
-
-                    if (insertedMeetings && insertedMeetings.length > 0) {
-                        // Add the newly created meeting to the local mockDatabase
-                        // Convert start/end back to Date objects if necessary for mockDatabase consistency
-                        const newMeetingForMockDb = {
-                            ...insertedMeetings[0],
-                            start: new Date(insertedMeetings[0].start),
-                            end: new Date(insertedMeetings[0].end)
-                        };
-                        if (window.mockDatabase && window.mockDatabase.meetings) {
-                            window.mockDatabase.meetings.push(newMeetingForMockDb);
-                            // Optionally, refresh parts of the UI if needed immediately
-                            // e.g., if calendar view needs updating: this.renderCalendarDays(); this.renderTimeSlots();
-                        }
-                        
-                        window.showToast('Meeting request submitted successfully!', 'success');
-                        meetingForm.reset();
-                        this.selectedTime = null; // Reset selected time
-                        // Re-render time slots to clear selection visually
-                        const timeSlotsContainer = document.getElementById('time-slots');
-                        if (timeSlotsContainer) {
-                             timeSlotsContainer.innerHTML = this.renderTimeSlots();
-                             this.setupTimeSlotListeners();
-                        }
-                    } else {
-                         window.showToast('Failed to submit meeting request.', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error submitting meeting:', error);
-                    window.showToast(`Error: ${error.message || 'Failed to submit meeting request.'}`, 'error');
-                }
-            });
+        // Meeting form submission - with cleanup
+        this.meetingForm = document.getElementById('meeting-form'); // Store form reference
+        if (this.meetingForm) {
+            // Remove the previous listener if it exists
+            if (this.submitHandler) {
+                console.log('[CalendarComponent] Removing previous submit listener.');
+                this.meetingForm.removeEventListener('submit', this.submitHandler);
+            }
+            
+            // Create and store the new bound listener
+            this.submitHandler = this._handleFormSubmit.bind(this);
+            
+            // Add the new listener
+            console.log('[CalendarComponent] Adding new submit listener.');
+            this.meetingForm.addEventListener('submit', this.submitHandler);
         }
         
         // Copy schedule link functionality

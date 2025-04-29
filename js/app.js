@@ -675,23 +675,55 @@ async function cancelMeeting() {
     if (!cancelBtn || !cancelBtn.dataset.meetingId) return;
     
     const meetingId = parseInt(cancelBtn.dataset.meetingId);
+    console.log(`Attempting to delete meeting with ID: ${meetingId}`);
+
+    // Optional: Add a confirmation dialog
+    // if (!confirm('Are you sure you want to permanently delete this meeting?')) {
+    //     return;
+    // }
+
     try {
-        const updatedMeeting = await mockDatabase.updateMeeting(meetingId, { status: 'canceled' });
-        
-        if (updatedMeeting) {
-            // Simulate sending email notification
-            sendEmailNotification(updatedMeeting, 'canceled');
-            
-            // Update UI
-            hideModal();
-            refreshCalendar();
-            loadUpcomingMeetings();
-            showToast('Meeting canceled successfully!', 'success');
-        } else {
-             showToast('Failed to cancel meeting. Please try again.', 'error');
+        // Perform the delete operation in Supabase
+        const { error } = await supabase
+            .from('Meetings')
+            .delete()
+            .eq('id', meetingId);
+
+        if (error) {
+            // If Supabase returned an error, throw it to be caught below
+            console.error('Supabase delete error:', error);
+            throw error;
         }
+
+        // If deletion was successful (no error thrown)
+        console.log(`Successfully deleted meeting ID: ${meetingId} from Supabase.`);
+        
+        // Remove the meeting from the local mockDatabase cache
+        const index = window.mockDatabase.meetings.findIndex(m => m.id === meetingId);
+        if (index !== -1) {
+            const deletedMeeting = window.mockDatabase.meetings.splice(index, 1)[0]; // Remove the item
+            console.log('Removed meeting from local cache:', deletedMeeting);
+        } else {
+            console.warn(`Meeting ID: ${meetingId} not found in local cache after deletion.`);
+        }
+
+        // Simulate sending email notification (optional, maybe remove for deletion)
+        // sendEmailNotification(deletedMeeting || {id: meetingId, title: 'Deleted Meeting'}, 'deleted');
+        
+        // Update UI
+        hideModal();
+        refreshCalendar(); // Refresh calendar view
+        loadUpcomingMeetings(); // Refresh dashboard list
+        // If you are on the Meetings page, you might need to re-render it:
+        // if (document.querySelector('#meetings-view-container')) { // Check if meetings view is active
+        //     loadMeetings(); 
+        // }
+        showToast('Meeting deleted successfully!', 'success');
+
     } catch (error) {
-         showToast(`Error canceling meeting: ${error.message}`, 'error');
+         // Handle errors from Supabase or other issues
+         console.error('Error deleting meeting:', error);
+         showToast(`Error deleting meeting: ${error.message || 'Unknown error'}`, 'error');
     }
 }
 

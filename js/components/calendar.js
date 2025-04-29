@@ -108,7 +108,24 @@ export default class CalendarComponent {
                                     placeholder="a@example.com, b@example.com"
                                 />
                             </div>
-                            
+
+                            <div>
+                                <label for="location" class="mb-1 block text-sm font-medium">Location</label>
+                                <div class="relative">
+                                    <input 
+                                    type="text" 
+                                    id="location" 
+                                    class="w-full rounded-md border px-3 py-2"
+                                    placeholder="Enter meeting location"
+                                    autocomplete="off"
+                                    />
+                                    <!-- suggestions dropdown -->
+                                    <div id="location-suggestions" 
+                                    class="absolute bg-white z-10 w-full max-h-48 overflow-y-auto border rounded-md mt-1 hidden"
+                                    ></div>
+                                </div>
+                            </div>
+                                                   
                             <div>
                                 <label for="purpose" class="mb-1 block text-sm font-medium">Meeting Purpose</label>
                                 <textarea 
@@ -568,6 +585,63 @@ export default class CalendarComponent {
                     });
             });
         }
+
+        const locationInput = document.getElementById('location');
+    const suggBox       = document.getElementById('location-suggestions');
+    if (locationInput && suggBox) {
+      let debounceTimer = null;
+      
+      // 1) Fetch suggestions as user types
+      locationInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = locationInput.value.trim();
+        if (!q) {
+          suggBox.innerHTML = '';
+          suggBox.classList.add('hidden');
+          return;
+        }
+        debounceTimer = setTimeout(() => {
+          fetch(`/api/autocomplete?input=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (!data.predictions?.length) {
+                suggBox.innerHTML = '';
+                suggBox.classList.add('hidden');
+                return;
+              }
+              suggBox.innerHTML = data.predictions
+                .map(p => `
+                  <div
+                    class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    data-place-id="${p.place_id}"
+                  >${p.description}</div>
+                `).join('');
+              suggBox.classList.remove('hidden');
+            })
+            .catch(console.error);
+        }, 300);
+      });
+      
+      // 2) Handle click on a suggestion
+      suggBox.addEventListener('click', e => {
+        const item = e.target.closest('[data-place-id]');
+        if (!item) return;
+        locationInput.value = item.textContent;
+        locationInput.dataset.placeId = item.dataset.placeId;
+        suggBox.innerHTML = '';
+        suggBox.classList.add('hidden');
+      });
+      
+      // 3) Hide suggestions when clicking elsewhere
+      document.addEventListener('click', e => {
+        if (
+          !locationInput.contains(e.target) &&
+          !suggBox.contains(e.target)
+        ) {
+          suggBox.classList.add('hidden');
+        }
+      });
+    }
     }
     
     // Setup time slot click listeners (separate method because we need to reattach after updating)

@@ -15,6 +15,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 const WEATHER_API_BASE_URL = 'http://api.weatherapi.com/v1';
+const Google_API_KEY = process.env.GOOGLE_API_KEY; // Google API key for geocoding
 
 // Check for essential environment variables
 if (!SUPABASE_URL || !SUPABASE_KEY || !WEATHER_API_KEY) {
@@ -64,6 +65,35 @@ function getClientIp(req) {
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// == Google API Endpoints ==
+app.get('/api/autocomplete', async (req, res) => {
+    const { input } = req.query;
+    if (!input) return res.status(400).json({ error: 'Missing input' });
+  
+    try {
+      const response = await axios.get(
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+        {
+          params: {
+            input,
+            key: process.env.GOOGLE_API_KEY,
+            // optionally restrict by country or types:
+            // components: 'country:us',
+            // types: '(cities)'
+          }
+        }
+      );
+      res.json(response.data);
+    } catch (err) {
+      console.error('Places API error:', err.response?.data || err);
+      res.status(500).json({ error: 'Autocomplete failed' });
+    }
+  });
+  
+  app.listen(PORT, () => {
+    console.log(`Server listening on http://localhost:${PORT}`);
+  });
 
 // == Weather API Endpoints ==
 

@@ -7,10 +7,15 @@ export default class MeetingsComponent {
 
     // Render the meetings view
     render() {
-        if (!this.mainContainer) return;
+        console.log('[MeetingsComponent.render] Using this.database.meetings:', this.database ? this.database.meetings : 'database not found'); // LOG 5
+        if (!this.mainContainer) {
+             console.error('[MeetingsComponent.render] Main container not found');
+             return;
+        }
 
         const upcomingMeetings = this.database.getUpcomingMeetings();
         const laterMeetings = this.database.getLaterMeetings();
+        console.log('[MeetingsComponent.render] Filtered meetings (upcoming, later):', upcomingMeetings, laterMeetings); // LOG 6
         
         this.mainContainer.innerHTML = `
             <div class="container mx-auto px-4 py-8">

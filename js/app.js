@@ -5,15 +5,22 @@ import CalendarComponent from './components/calendar.js';
 import MeetingsComponent from './components/meetings.js';
 
 async function fetchMeetings() {
-    let { data: Meetings, error } = await supabase.from('Meetings').select('*');
+    let { data: meetingsData, error } = await supabase.from('Meetings').select('*');
 
     if (error) {
         console.error("Error fetching meetings:", error);
         return [];
     }
 
-    console.log(Meetings);
-    return Meetings;
+    // Convert timestamp strings to Date objects
+    const meetings = meetingsData.map(meeting => ({
+        ...meeting,
+        start: new Date(meeting.start),
+        end: new Date(meeting.end)
+    }));
+
+    console.log("Fetched and processed meetings:", meetings);
+    return meetings;
 }
 
 async function fetchUser(){
@@ -46,7 +53,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     
     // Fetch meetings before initializing the database
+    console.log('Attempting to fetch meetings...');
     const meetings = await fetchMeetings();
+    console.log('Meetings fetched in DOMContentLoaded:', meetings);
     const user = await fetchUser();
     
     /*
@@ -72,44 +81,81 @@ document.addEventListener('DOMContentLoaded', async function () {
             return newMeeting;
         },
 
-        updateMeeting(id, updates) {
-            const index = this.meetings.findIndex(m => m.id === id);
-            if (index !== -1) {
-                if (updates.status === 'approved') {
-                    updates.color = '#10b981';
-                } else if (updates.status === 'canceled') {
-                    updates.color = '#ef4444';
-                }
-                this.meetings[index] = { ...this.meetings[index], ...updates };
-                return this.meetings[index];
+        async updateMeeting(id, updates) {
+            // Prepare updates for Supabase (only send fields being changed)
+            const supabaseUpdates = { ...updates };
+            // Adjust color based on status for Supabase update
+            if (updates.status === 'approved') {
+                supabaseUpdates.color = '#10b981';
+            } else if (updates.status === 'canceled') {
+                supabaseUpdates.color = '#ef4444';
             }
-            return null;
+            
+            try {
+                // Update Supabase first
+                const { data, error } = await supabase
+                    .from('Meetings')
+                    .update(supabaseUpdates)
+                    .eq('id', id)
+                    .select(); // Select the updated row
+
+                if (error) {
+                    console.error('Error updating meeting in Supabase:', error);
+                    throw error; // Re-throw the error to be caught by the caller
+                }
+
+                // If Supabase update is successful, update the local mockDatabase
+                const index = this.meetings.findIndex(m => m.id === id);
+                if (index !== -1 && data && data.length > 0) {
+                    // Update local array with the data returned from Supabase
+                    // Ensure start/end are Date objects in the local cache
+                    this.meetings[index] = {
+                         ...data[0],
+                         start: new Date(data[0].start),
+                         end: new Date(data[0].end)
+                    };
+                    console.log('Updated meeting locally:', this.meetings[index]);
+                    return this.meetings[index]; // Return the updated meeting
+                } else {
+                     console.warn('Meeting not found locally after Supabase update, or no data returned', id);
+                     return null;
+                }
+            } catch (error) {
+                // Let the calling function handle UI feedback (e.g., showToast)
+                console.error('Failed to update meeting:', error);
+                return null; // Indicate failure
+            }
         },
 
         getUpcomingMeetings() {
-            const now = new Date();
+            console.log('[getUpcomingMeetings] Filtering only by status != canceled');
             return this.meetings
-                .filter(m => new Date(m.start) >= now && m.status !== 'canceled')
-                .sort((a, b) => new Date(a.start) - new Date(b.start));
+                .filter(m => {
+                    const isNotCanceled = m.status !== 'canceled';
+                    // Log details for each meeting being filtered
+                    console.log(`[getUpcomingMeetings] Meeting ID: ${m.id}, Status: ${m.status}, IsNotCanceled: ${isNotCanceled}, Keep: ${isNotCanceled}`);
+                    return isNotCanceled;
+                })
+                .sort((a, b) => a.start - b.start); // Compare dates directly
         },
 
         getLaterMeetings() {
-            const now = new Date();
-            const nextWeek = new Date(now);
-            nextWeek.setDate(now.getDate() + 7);
-
+            console.log('[getLaterMeetings] Filtering only by status != canceled (same as upcoming for now)');
             return this.meetings
                 .filter(m => {
-                    const meetingDate = new Date(m.start);
-                    return meetingDate >= nextWeek && m.status !== 'canceled';
+                    const isNotCanceled = m.status !== 'canceled';
+                     // Log details for each meeting being filtered
+                    console.log(`[getLaterMeetings] Meeting ID: ${m.id}, Status: ${m.status}, IsNotCanceled: ${isNotCanceled}, Keep: ${isNotCanceled}`);
+                    return isNotCanceled;
                 })
-                .sort((a, b) => new Date(a.start) - new Date(b.start));
+                .sort((a, b) => a.start - b.start); // Compare dates directly
         },
 
         getMeetingById(id) {
             return this.meetings.find(m => m.id === id);
         }
     };
+    console.log('mockDatabase initialized with meetings:', mockDatabase.meetings);
 
     // Initialize application only after `mockDatabase` is ready
     await initApplication(mockDatabase);
@@ -387,12 +433,17 @@ function initCalendar() {
 
 // Load upcoming meetings in the dashboard
 function loadUpcomingMeetings() {
+    console.log('[loadUpcomingMeetings] Using mockDatabase.meetings:', window.mockDatabase ? window.mockDatabase.meetings : 'mockDatabase not found'); // LOG 3
     const meetingsList = document.getElementById('upcoming-meetings-list');
     const countSpan = document.getElementById('upcoming-meetings-count');
     
-    if (!meetingsList || !countSpan) return;
+    if (!meetingsList || !countSpan) {
+        console.error('[loadUpcomingMeetings] UI elements not found');
+        return;
+    }
     
-    const upcomingMeetings = mockDatabase.getUpcomingMeetings();
+    const upcomingMeetings = window.mockDatabase.getUpcomingMeetings();
+    console.log('[loadUpcomingMeetings] Filtered upcoming meetings:', upcomingMeetings); // LOG 4
     
     if (upcomingMeetings.length === 0) {
         meetingsList.innerHTML = '<p class="text-gray-500 text-center py-4">No upcoming meetings</p>';
@@ -585,22 +636,28 @@ function hideModal() {
 }
 
 // Approve meeting
-function approveMeeting() {
+async function approveMeeting() {
     const approveBtn = document.getElementById('approve-meeting');
     if (!approveBtn || !approveBtn.dataset.meetingId) return;
     
     const meetingId = parseInt(approveBtn.dataset.meetingId);
-    const updatedMeeting = mockDatabase.updateMeeting(meetingId, { status: 'approved' });
-    
-    if (updatedMeeting) {
-        // Simulate sending email notification
-        sendEmailNotification(updatedMeeting, 'approved');
+    try {
+        const updatedMeeting = await mockDatabase.updateMeeting(meetingId, { status: 'approved' });
         
-        // Update UI
-        hideModal();
-        refreshCalendar();
-        loadUpcomingMeetings();
-        showToast('Meeting approved successfully!', 'success');
+        if (updatedMeeting) {
+            // Simulate sending email notification
+            sendEmailNotification(updatedMeeting, 'approved');
+            
+            // Update UI
+            hideModal();
+            refreshCalendar();
+            loadUpcomingMeetings();
+            showToast('Meeting approved successfully!', 'success');
+        } else {
+             showToast('Failed to approve meeting. Please try again.', 'error');
+        }
+    } catch (error) {
+         showToast(`Error approving meeting: ${error.message}`, 'error');
     }
 }
 
@@ -613,22 +670,28 @@ function rescheduleMeeting() {
 }
 
 // Cancel meeting
-function cancelMeeting() {
+async function cancelMeeting() {
     const cancelBtn = document.getElementById('cancel-meeting');
     if (!cancelBtn || !cancelBtn.dataset.meetingId) return;
     
     const meetingId = parseInt(cancelBtn.dataset.meetingId);
-    const updatedMeeting = mockDatabase.updateMeeting(meetingId, { status: 'canceled' });
-    
-    if (updatedMeeting) {
-        // Simulate sending email notification
-        sendEmailNotification(updatedMeeting, 'canceled');
+    try {
+        const updatedMeeting = await mockDatabase.updateMeeting(meetingId, { status: 'canceled' });
         
-        // Update UI
-        hideModal();
-        refreshCalendar();
-        loadUpcomingMeetings();
-        showToast('Meeting canceled successfully!', 'success');
+        if (updatedMeeting) {
+            // Simulate sending email notification
+            sendEmailNotification(updatedMeeting, 'canceled');
+            
+            // Update UI
+            hideModal();
+            refreshCalendar();
+            loadUpcomingMeetings();
+            showToast('Meeting canceled successfully!', 'success');
+        } else {
+             showToast('Failed to cancel meeting. Please try again.', 'error');
+        }
+    } catch (error) {
+         showToast(`Error canceling meeting: ${error.message}`, 'error');
     }
 }
 

@@ -626,13 +626,32 @@ function cancelMeeting() {
 }
 
 // Simulated email notification
-function sendEmailNotification(meeting, action) {
-    console.log(`[EMAIL NOTIFICATION] Meeting "${meeting.title}" has been ${action}.`);
-    console.log(`To: ${meeting.requesterEmail}`);
-    console.log(`Subject: Meeting ${action.charAt(0).toUpperCase() + action.slice(1)}: ${meeting.title}`);
-    
-    // In a real app, this would call an API endpoint to send emails
+async function sendEmailNotification(meeting, action) {
+    try {
+        const userEmail = meeting.requesterEmail || await auth.getUserEmail(); // Try to use requester's email
+
+        await fetch('/api/sendMeetingEmail', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                toEmail: userEmail,
+                meetingDetails: {
+                    title: meeting.title,
+                    time: meeting.start,
+                    location: meeting.location || 'Online'
+                }
+            })
+        });
+
+        console.log(`[REAL EMAIL SENT] Meeting "${meeting.title}" has been ${action}. Email sent to: ${userEmail}`);
+    } catch (error) {
+        console.error('Error sending real email notification:', error);
+    }
 }
+
+
 
 // Refresh calendar events
 function refreshCalendar() {

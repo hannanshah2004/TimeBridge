@@ -1,5 +1,5 @@
 // Meetings Component for TimeBridge
-class MeetingsComponent {
+export default class MeetingsComponent {
     constructor(database) {
         this.database = database;
         this.mainContainer = document.getElementById('main-content');
@@ -211,7 +211,4 @@ class MeetingsComponent {
             });
         }
     }
-}
-
-// Export the component
-window.MeetingsComponent = MeetingsComponent; 
+} 

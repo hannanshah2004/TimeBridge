@@ -1,6 +1,8 @@
 import supabase from "./supabaseClient.js";
 import * as auth from "./auth.js";
 import WeatherComponent from './components/weather.js';
+import CalendarComponent from './components/calendar.js';
+import MeetingsComponent from './components/meetings.js';
 
 async function fetchMeetings() {
     let { data: Meetings, error } = await supabase.from('Meetings').select('*');
@@ -320,6 +322,7 @@ function loadCalendar() {
     // Create and render the Calendar component
     const calendarComponent = new CalendarComponent(mockDatabase);
     calendarComponent.render();
+    calendarComponent.setupEventListeners(); // Ensure event listeners are set up after rendering
 }
 
 // Load meetings view using the Meetings component
@@ -327,6 +330,10 @@ function loadMeetings() {
     // Create and render the Meetings component
     const meetingsComponent = new MeetingsComponent(mockDatabase);
     meetingsComponent.render();
+    // Assuming MeetingsComponent also has a setupEventListeners method
+    if (typeof meetingsComponent.setupEventListeners === 'function') {
+        meetingsComponent.setupEventListeners();
+    }
 }
 
 // Setup global event listeners

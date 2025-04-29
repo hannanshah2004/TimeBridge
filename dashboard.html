@@ -200,26 +200,10 @@
     </div>
 
     <!-- Component Scripts -->
-    <script src="./js/components/calendar.js"></script>
-    <script src="./js/components/meetings.js"></script>
+    <script type="module" src="./js/components/calendar.js"></script>
+    <script type="module" src="./js/components/meetings.js"></script>
     
     <!-- Main Application Script -->
     <script type="module" src="js/app.js"></script>
-    
-    <!-- Authentication Script -->
-    <script type="module">
-        import * as auth from './js/auth.js';
-        
-        document.addEventListener('DOMContentLoaded', async function() {
-            // Initialize authentication
-            if (!await auth.checkAuth()) return;
-            
-            // Setup user menu 
-            await auth.setupUserMenu();
-            
-            // Setup toast notifications
-            auth.setupToast();
-        });
-    </script>
 </body>
 </html> 

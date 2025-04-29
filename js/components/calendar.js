@@ -1,5 +1,7 @@
+import supabase from "../supabaseClient.js";
+
 // Calendar Component for TimeBridge
-class CalendarComponent {
+export default class CalendarComponent {
     constructor(database) {
         this.database = database;
         this.mainContainer = document.getElementById('main-content');
@@ -453,7 +455,7 @@ class CalendarComponent {
         // Meeting form submission
         const meetingForm = document.getElementById('meeting-form');
         if (meetingForm) {
-            meetingForm.addEventListener('submit', (e) => {
+            meetingForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
                 const nameInput = document.getElementById('name');
@@ -461,8 +463,13 @@ class CalendarComponent {
                 const purposeInput = document.getElementById('purpose');
                 const attendeesInput = document.getElementById('attendees-email');
                 
+                if (!this.selectedTime) {
+                    window.showToast('Please select a time slot first', 'warning');
+                    return;
+                }
+
                 if (!nameInput.value || !emailInput.value) {
-                    window.showToast('Please fill out all required fields', 'warning');
+                    window.showToast('Please fill out your name and email', 'warning');
                     return;
                 }
                 
@@ -481,22 +488,59 @@ class CalendarComponent {
                 const endDate = new Date(meetingDate);
                 endDate.setMinutes(endDate.getMinutes() + 30); // 30 min meeting by default
                 
-                const newMeeting = {
+                const newMeetingData = {
                     title: purposeInput.value || 'Meeting',
-                    start: meetingDate,
-                    end: endDate,
+                    start: meetingDate.toISOString(), // Use ISO string for Supabase timestamp
+                    end: endDate.toISOString(),     // Use ISO string for Supabase timestamp
                     requesterName: nameInput.value,
                     requesterEmail: emailInput.value,
-                    attendees: attendeesInput.value.split(',').map(email => email.trim()),
-                    description: purposeInput.value
+                    attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input
+                    description: purposeInput.value,
+                    status: 'pending', // Add default status
+                    color: '#f59e0b'  // Add default color
                 };
                 
-                // Add to database and show confirmation
-                const added = this.database.addMeeting(newMeeting);
-                if (added) {
-                    window.showToast('Meeting request submitted successfully!', 'success');
-                    meetingForm.reset();
-                                    }
+                // Insert into Supabase database
+                try {
+                    const { data: insertedMeetings, error } = await supabase
+                        .from('Meetings')
+                        .insert([newMeetingData])
+                        .select(); // Select the inserted row to get its ID
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    if (insertedMeetings && insertedMeetings.length > 0) {
+                        // Add the newly created meeting to the local mockDatabase
+                        // Convert start/end back to Date objects if necessary for mockDatabase consistency
+                        const newMeetingForMockDb = {
+                            ...insertedMeetings[0],
+                            start: new Date(insertedMeetings[0].start),
+                            end: new Date(insertedMeetings[0].end)
+                        };
+                        if (window.mockDatabase && window.mockDatabase.meetings) {
+                            window.mockDatabase.meetings.push(newMeetingForMockDb);
+                            // Optionally, refresh parts of the UI if needed immediately
+                            // e.g., if calendar view needs updating: this.renderCalendarDays(); this.renderTimeSlots();
+                        }
+                        
+                        window.showToast('Meeting request submitted successfully!', 'success');
+                        meetingForm.reset();
+                        this.selectedTime = null; // Reset selected time
+                        // Re-render time slots to clear selection visually
+                        const timeSlotsContainer = document.getElementById('time-slots');
+                        if (timeSlotsContainer) {
+                             timeSlotsContainer.innerHTML = this.renderTimeSlots();
+                             this.setupTimeSlotListeners();
+                        }
+                    } else {
+                         window.showToast('Failed to submit meeting request.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error submitting meeting:', error);
+                    window.showToast(`Error: ${error.message || 'Failed to submit meeting request.'}`, 'error');
+                }
             });
         }
         
@@ -537,7 +581,4 @@ class CalendarComponent {
             });
         });
     }
-}
-
-// Export the component
-window.CalendarComponent = CalendarComponent; 
+} 

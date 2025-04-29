@@ -1,13 +1,13 @@
 // server.js - Backend for TimeBridge
 const express = require('express');
+// Load environment variables from .env file
 const dotenv = require('dotenv');
+dotenv.config();
 const path = require('path');
 const axios = require('axios'); // For making HTTP requests to WeatherAPI
 const cors = require('cors'); // Add CORS middleware
 const { createClient } = require('@supabase/supabase-js');
-
-// Load environment variables from .env file
-dotenv.config();
+const { sendMeetingConfirmationEmail } = require('./js/components/email.js');
 
 // --- Configuration ---
 const PORT = process.env.PORT || 3000;
@@ -128,6 +128,20 @@ app.get('/api/weather/forecast', async (req, res) => {
         res.status(status).json({ error: { message, code: error.response?.data?.error?.code } });
     }
 });
+
+// Meeting confirmation email API
+app.post('/api/send-meeting-confirmation', async (req, res) => {
+    const { to, subject, html } = req.body;
+  
+    try {
+      const emailResponse = await sendMeetingConfirmationEmail({ to, subject, html });
+      res.status(200).json({ success: true, message: 'Email sent', response: emailResponse });
+    } catch (error) {
+      console.error('Failed to send confirmation email:', error);
+      res.status(500).json({ success: false, message: 'Failed to send email', error: error.message });
+    }
+  });
+  
 
 // == Meetings API Endpoints (interacting with Supabase) ==
 

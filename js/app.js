@@ -476,6 +476,27 @@ function showMeetingModal(meetingId) {
     } else {
         modalTitle.textContent = 'Meeting Details';
     }
+
+    // Send Meetimg Email
+async function sendMeetingEmail(to, subject, html) {
+    try {
+      const response = await fetch('/api/send-meeting-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, html })
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to send meeting confirmation email');
+      }
+  
+      const data = await response.json();
+      console.log('Meeting email sent successfully:', data);
+    } catch (error) {
+      console.error('Error sending meeting email:', error);
+    }
+  }
+  
     
     // Format dates
     const startDate = new Date(meeting.start);

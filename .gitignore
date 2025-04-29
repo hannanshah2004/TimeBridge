@@ -1,1 +1,8 @@
-node_modules/\n.env\ndist/\nbuild/\n.vscode/
+// .gitignore
+node_modules/
+.env
+dist/
+build/
+.DS_Store
+*.log
+

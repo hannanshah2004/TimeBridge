@@ -172,18 +172,32 @@ export default class MeetingsComponent {
             });
         });
 
-        // Cancel meeting button click handlers
+        // Cancel meeting button click handlers (Update status)
         document.querySelectorAll('.cancel-meeting-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            // Make the listener async
+            btn.addEventListener('click', async (e) => { 
                 e.stopPropagation();
-                const meetingId = parseInt(btn.closest('.meeting-card').dataset.meetingId);
+                const meetingCard = btn.closest('.meeting-card');
+                if (!meetingCard) return;
+                const meetingId = parseInt(meetingCard.dataset.meetingId);
+                
                 if (meetingId) {
-                    // Use the existing cancel meeting function
-                    const cancelled = this.database.updateMeeting(meetingId, { status: 'canceled' });
-                    if (cancelled) {
+                    console.log(`[MeetingsComponent] Cancel button clicked for ID: ${meetingId}`);
+                    
+                    // Call the async updateMeeting function and wait for it
+                    const updatedMeeting = await this.database.updateMeeting(meetingId, { status: 'canceled' });
+                    
+                    // Check if the update was successful (updateMeeting returns the updated meeting or null)
+                    if (updatedMeeting) { 
                         window.showToast('Meeting cancelled successfully', 'success');
-                        // Refresh the meetings view
-                        this.render();
+                        // Re-render this component's view AFTER the update is complete
+                        console.log('[MeetingsComponent] Re-rendering meetings view after cancellation.');
+                        this.render(); 
+                    } else {
+                        // updateMeeting handles its own errors/toasts, but we can add one here if needed
+                        console.error('[MeetingsComponent] Failed to cancel meeting via updateMeeting.');
+                        // Optionally show a generic error toast here if updateMeeting failed silently
+                        // window.showToast('Failed to cancel meeting.', 'error');
                     }
                 }
             });

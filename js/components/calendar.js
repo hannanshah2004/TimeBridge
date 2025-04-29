@@ -69,11 +69,6 @@ export default class CalendarComponent {
                                 ${this.renderTimeSlots()}
                             </div>
                             
-                            <div class="mt-6">
-                                <button id="schedule-btn" class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                                    Schedule Meeting
-                                </button>
-                            </div>
                         </div>
                     </div>
                     

@@ -198,8 +198,7 @@ class WeatherComponent {
                             ${location.region}, ${location.country}
                         </p>
                         <div class="flex items-center mt-2">
-                            <span class="text-2xl font-bold text-gray-900">${current.temp_c}°C</span>
-                            <span class="ml-2 text-sm text-gray-500">${current.temp_f}°F</span>
+                            <span class="text-2xl font-bold text-gray-900">${current.temp_f}°F</span>
                         </div>
                     </div>
                     <div class="flex flex-col items-center">
@@ -213,7 +212,7 @@ class WeatherComponent {
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                         </svg>
-                        Feels like: ${current.feelslike_c}°C
+                        Feels like: ${current.feelslike_f}°F
                     </div>
                     <div class="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -247,7 +246,7 @@ class WeatherComponent {
                             <div class="text-center p-2 rounded-lg bg-gray-50">
                                 <p class="text-xs font-medium">${this.formatDate(day.date)}</p>
                                 <img src="${day.day.condition.icon}" alt="${day.day.condition.text}" class="w-10 h-10 mx-auto my-1">
-                                <p class="text-xs">${day.day.avgtemp_c}°C</p>
+                                <p class="text-xs">${day.day.avgtemp_f}°F</p>
                                 <p class="text-xs text-gray-500">${day.day.condition.text}</p>
                             </div>
                         `).join('')}

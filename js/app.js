@@ -144,25 +144,38 @@ document.addEventListener('DOMContentLoaded', async function () {
         },
 
         getUpcomingMeetings() {
-            console.log('[getUpcomingMeetings] Filtering only by status != canceled');
+            const now = new Date();
+            const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            // Set time to end of day for comparison range
+            sevenDaysFromNow.setHours(23, 59, 59, 999);
+            now.setHours(0, 0, 0, 0); // Set now to start of day
+
+            console.log(`[getUpcomingMeetings] Filtering between ${now.toISOString()} and ${sevenDaysFromNow.toISOString()}`);
             return this.meetings
                 .filter(m => {
+                    const isUpcoming = m.start >= now && m.start <= sevenDaysFromNow;
                     const isNotCanceled = m.status !== 'canceled';
                     // Log details for each meeting being filtered
-                    console.log(`[getUpcomingMeetings] Meeting ID: ${m.id}, Status: ${m.status}, IsNotCanceled: ${isNotCanceled}, Keep: ${isNotCanceled}`);
-                    return isNotCanceled;
+                    // console.log(`[getUpcomingMeetings] Meeting ID: ${m.id}, Start: ${m.start.toISOString()}, Status: ${m.status}, IsUpcoming: ${isUpcoming}, IsNotCanceled: ${isNotCanceled}, Keep: ${isUpcoming && isNotCanceled}`);
+                    return isUpcoming && isNotCanceled;
                 })
                 .sort((a, b) => a.start - b.start); // Compare dates directly
         },
 
         getLaterMeetings() {
-            console.log('[getLaterMeetings] Filtering only by status != canceled (same as upcoming for now)');
+            const now = new Date();
+            const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            // Set time to start of the day after 7 days
+            sevenDaysFromNow.setHours(0, 0, 0, 0);
+
+            console.log(`[getLaterMeetings] Filtering for dates after ${sevenDaysFromNow.toISOString()}`);
             return this.meetings
                 .filter(m => {
+                    const isLater = m.start > sevenDaysFromNow;
                     const isNotCanceled = m.status !== 'canceled';
                      // Log details for each meeting being filtered
-                    console.log(`[getLaterMeetings] Meeting ID: ${m.id}, Status: ${m.status}, IsNotCanceled: ${isNotCanceled}, Keep: ${isNotCanceled}`);
-                    return isNotCanceled;
+                    // console.log(`[getLaterMeetings] Meeting ID: ${m.id}, Start: ${m.start.toISOString()}, Status: ${m.status}, IsLater: ${isLater}, IsNotCanceled: ${isNotCanceled}, Keep: ${isLater && isNotCanceled}`);
+                    return isLater && isNotCanceled;
                 })
                 .sort((a, b) => a.start - b.start); // Compare dates directly
         },

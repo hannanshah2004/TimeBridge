@@ -1,8 +1,3 @@
-// apiClient.js - Handles all external API integrations
-
-/**
- * Base class for API clients
- */
 class BaseApiClient {
     constructor() {
         // The base URL for all backend API requests
@@ -123,48 +118,13 @@ class WeatherApiClient extends BaseApiClient {
     }
 }
 
-/**
- * Meetings API client
- */
-class MeetingsApiClient extends BaseApiClient {
-    constructor() {
-        super();
-    }
-
-    /**
-     * Fetches all meetings.
-     */
-    async getAllMeetings() {
-        return this.get('meetings');
-    }
-
-    /**
-     * Creates a new meeting.
-     * @param {object} meetingData - Data for the new meeting.
-     */
-    async createMeeting(meetingData) {
-        return this.post('meetings', meetingData);
-    }
-
-    /**
-     * Updates an existing meeting.
-     * @param {number} id - The ID of the meeting to update.
-     * @param {object} updates - The fields to update.
-     */
-    async updateMeeting(id, updates) {
-        return this.put(`meetings/${id}`, updates);
-    }
-}
 
 // Export instances of the API clients
 export const weatherApi = new WeatherApiClient();
-export const meetingsApi = new MeetingsApiClient();
 
 // Create an object to house all API clients for easy importing if preferred
 const apiClient = {
     weather: weatherApi,
-    meetings: meetingsApi
-    // Add other clients here as needed
 };
 
 export default apiClient;

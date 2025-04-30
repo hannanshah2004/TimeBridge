@@ -94,24 +94,34 @@ app.post('/generate', async (req, res) => {
 
 // == EMAIL API Endpoints ==
 app.post('/send-email', async (req, res) => {
-    const { name, email, message } = req.body
-  
-    const msg = {
-      to:      email,     // your receiving address
-      from:    'ha504@scarletmail.rutgers.edu',    // a verified sender on your SendGrid account
-      subject: `New message from ${name}`,
-      text:    message,
-      html:    `<p>${message.replace(/\n/g, '<br>')}</p>`
-    }
-  
-    try {
-      await sgMail.send(msg)
-      res.json({ ok: true })
-    } catch (err) {
-      console.error('SendGrid error:', err)
-      res.status(500).send('Email send failed')
-    }
-  })
+  const { name, email, message } = req.body;
+
+  // Normalize into an array of recipient strings
+  const recipients = Array.isArray(email)
+    ? email
+    : String(email)
+        .split(/[,;\s]+/)    // split on commas, semicolons or whitespace
+        .map(e => e.trim())
+        .filter(e => e);
+
+  const msg = {
+    to:      recipients,                       // <-- array of emails
+    from:    'ha504@scarletmail.rutgers.edu',  // verified sender
+    subject: `New message from ${name}`,
+    text:    message,
+    html:    `<p>${message.replace(/\n/g, '<br>')}</p>`,
+  };
+
+  try {
+    await sgMail.send(msg);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(
+      'SendGrid error response body:',
+      JSON.stringify(err.response?.body, null, 2)
+    );
+  }
+});
 
 // == Google API Endpoints ==
 app.get('/api/autocomplete', async (req, res) => {

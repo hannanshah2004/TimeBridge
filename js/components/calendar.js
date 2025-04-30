@@ -610,15 +610,51 @@ export default class CalendarComponent {
             const isPM = this.selectedTime.includes('PM');
             const meetingDate = new Date(this.selectedDate);
             meetingDate.setHours(isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours), parseInt(minutes), 0, 0 );
+            const meetingStartISO = meetingDate.toISOString();
+            
+            // --- ADD DUPLICATE CHECK HERE ---
+            console.log(`Checking for existing meetings for user ${userUuid} at ${meetingStartISO}`);
+            const { data: existingMeetings, error: checkError } = await supabase
+                .from('Meetings')
+                .select('id, start, status') // Select only needed fields
+                .eq('uuid', userUuid)
+                .eq('start', meetingStartISO)
+                // .neq('status', 'canceled'); // Optionally ignore canceled meetings
+
+            if (checkError) {
+                console.error('Error checking for duplicate meetings:', checkError);
+                window.showToast(`Error checking schedule: ${checkError.message}`, 'error');
+                if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Confirm Meeting Request'; }
+                return; // Stop if we couldn't check
+            }
+
+            // Filter out canceled meetings locally if needed (if not done in the query)
+            const activeExistingMeetings = existingMeetings.filter(m => m.status !== 'canceled');
+
+            if (activeExistingMeetings.length > 0) {
+                console.warn('Duplicate meeting detected:', activeExistingMeetings);
+                window.showToast('This time slot is already booked.', 'warning');
+                if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Confirm Meeting Request'; }
+                return; // Stop submission
+            }
+            console.log('No duplicate meetings found for this time slot.');
+            // --- END DUPLICATE CHECK ---
+            
             const endDate = new Date(meetingDate);
             endDate.setMinutes(endDate.getMinutes() + 30); 
             
             const newMeetingData = {
-                title: purposeInput.value || 'Meeting', start: meetingDate.toISOString(), end: endDate.toISOString(), 
-                requesterName: nameInput.value, requesterEmail: emailInput.value,
+                title: purposeInput.value || 'Meeting', 
+                start: meetingStartISO, // Use the ISO string calculated earlier
+                end: endDate.toISOString(), 
+                requesterName: nameInput.value, 
+                requesterEmail: emailInput.value,
                 attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [],
-                meetingLocation: locationInput.value, description: purposeInput.value,
-                status: 'pending', color: '#f59e0b', uuid: userUuid
+                meetingLocation: locationInput.value, 
+                description: purposeInput.value,
+                status: 'pending', 
+                color: '#f59e0b', 
+                uuid: userUuid
             };
             
             const { data: insertedMeetings, error: insertError } = await supabase.from('Meetings').insert([newMeetingData]).select();

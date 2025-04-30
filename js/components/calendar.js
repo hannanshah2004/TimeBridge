@@ -5,15 +5,23 @@ export default class CalendarComponent {
     constructor(database) {
         this.database = database;
         this.mainContainer = document.getElementById('main-content');
-        this.selectedDate = new Date();
+        this.selectedDate = new Date(); 
+        this.currentMonthView = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), 1); // Date representing the month being viewed
         this.selectedTime = null;
-        this.submitHandler = null; // Property to hold the bound event listener
-        this.meetingForm = null;   // Property to hold the form element reference
+        this.submitHandler = null; 
+        this.meetingForm = null;   
+        
+        // Bound event handlers for static elements
+        this._boundHandlePrevClick = this._handlePrevClick.bind(this);
+        this._boundHandleNextClick = this._handleNextClick.bind(this);
+        this._boundHandleMonthSelect = this._handleMonthSelect.bind(this);
     }
 
     render() {
         if (!this.mainContainer) return;
-
+        // Use currentMonthView for generating month options
+        const monthOptions = this.generateMonthOptions(this.currentMonthView);
+        
         this.mainContainer.innerHTML = `
             <div class="container mx-auto px-4 py-8">
             <div class="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
@@ -34,9 +42,7 @@ export default class CalendarComponent {
                     <span class="sr-only">Previous Month</span>
                     </button>
                     
-                    <select id="month-selector" class="h-10 rounded-md border px-3 py-2">
-                    ${this.generateMonthOptions()}
-                    </select>
+                    <select id="month-selector" class="h-10 rounded-md border px-3 py-2">${monthOptions}</select>
                     
                     <button id="next-month" class="flex h-8 items-center justify-center rounded-md border px-3 text-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
@@ -59,16 +65,16 @@ export default class CalendarComponent {
                     </div>
                     
                     <div class="grid grid-cols-7 gap-1" id="calendar-days">
-                    ${this.renderCalendarDays()}
+                    ${this.renderCalendarDays(this.currentMonthView)}
                     </div>
                 </div>
                 
                 <!-- Time slots -->
                 <div class="rounded-lg border p-4">
-                    <h3 class="mb-4 text-lg font-medium">Available Times (${this.formatSelectedDate()})</h3>
+                    <h3 id="available-times-header" class="mb-4 text-lg font-medium">Available Times (${this.formatSelectedDate(this.selectedDate)})</h3>
                     
                     <div class="grid grid-cols-2 gap-2 sm:grid-cols-3" id="time-slots">
-                    ${this.renderTimeSlots()}
+                    ${this.renderTimeSlots(this.selectedDate)}
                     </div>
                 </div>
                 </div>
@@ -159,68 +165,64 @@ export default class CalendarComponent {
                 </div>
             </div>
             </div>
-        `;}
-    
-    getDayName(dayOffset) {
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const today = new Date();
-        const futureDate = new Date(today);
-        futureDate.setDate(today.getDate() + dayOffset);
-        return days[futureDate.getDay()];
+        `;
+        // Setup initial event listeners after full render
+        this.setupEventListeners();
     }
-    // Generate month options for the dropdown
-    generateMonthOptions() {
+    
+    // Generate month options based on a starting view date
+    generateMonthOptions(viewDate) {
         const months = [
             'January', 'February', 'March', 'April', 'May', 'June', 
             'July', 'August', 'September', 'October', 'November', 'December'
         ];
         
-        const currentDate = new Date();
-        const currentYear = currentDate.getFullYear();
-        
-        // Generate options for the current month and next 11 months
+        const viewYear = viewDate.getFullYear();
+        const viewMonth = viewDate.getMonth();
+
         let options = '';
-        for (let i = 0; i < 12; i++) {
-            const monthIndex = (currentDate.getMonth() + i) % 12;
-            const year = currentYear + Math.floor((currentDate.getMonth() + i) / 12);
-            const selected = monthIndex === this.selectedDate.getMonth() && year === this.selectedDate.getFullYear() ? 'selected' : '';
+        // Generate options for a range around the current view, e.g., +/- 6 months
+        for (let i = -6; i <= 6; i++) {
+            const targetDate = new Date(viewYear, viewMonth + i, 1);
+            const monthIndex = targetDate.getMonth();
+            const year = targetDate.getFullYear();
+            const value = `${monthIndex},${year}`;
+            // Check if this option matches the current month being viewed
+            const selected = monthIndex === viewMonth && year === viewYear ? 'selected' : '';
             
-            options += `<option value="${monthIndex},${year}" ${selected}>${months[monthIndex]} ${year}</option>`;
+            options += `<option value="${value}" ${selected}>${months[monthIndex]} ${year}</option>`;
         }
         
         return options;
     }
 
-    // Render calendar days for the selected month
-    renderCalendarDays() {
-        const year = this.selectedDate.getFullYear();
-        const month = this.selectedDate.getMonth();
+    // Render calendar days for a specific month view
+    renderCalendarDays(viewDate) {
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
         
-        // Get the first day of the month and the total days in the month
-        const firstDay = new Date(year, month, 1).getDay();
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
-        // Get busy days from the database
         const busyDays = this.getBusyDays(year, month);
         
         let calendarHTML = '';
         
-        // Add empty cells for days before the first day of the month
-        for (let i = 0; i < firstDay; i++) {
+        // Add empty cells
+        for (let i = 0; i < firstDayOfMonth; i++) {
             calendarHTML += '<div class="h-10 rounded-md p-1"></div>';
         }
         
         // Add calendar days
         for (let day = 1; day <= daysInMonth; day++) {
-            const isToday = this.isToday(year, month, day);
             const isSelected = this.isSelectedDay(year, month, day);
             const isBusy = busyDays.includes(day);
             
             const classes = [
                 'calendar-day',
                 'flex h-10 cursor-pointer items-center justify-center rounded-md p-1 text-sm',
-                isSelected ? 'selected' : 'hover:bg-gray-100',
-                isBusy ? 'busy relative' : ''
+                isSelected ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100',
+                isBusy ? 'busy relative opacity-50 pointer-events-none' : '' // Keeping the original busy style for now
             ].join(' ');
             
             calendarHTML += `<div class="${classes}" data-date="${year}-${month+1}-${day}">${day}</div>`;
@@ -229,13 +231,10 @@ export default class CalendarComponent {
         return calendarHTML;
     }
 
-    // Render time slots for the selected date
-    renderTimeSlots() {
-        // In a real app, available times would come from the database
-        // Here we'll simulate some busy times
-        const busyTimes = [];
-        
-        // Generate time slots from 9 AM to 5 PM in 30-minute increments
+    // Render time slots for a specific selected date
+    renderTimeSlots(selectedDate) {
+        // TODO: Fetch actual availability based on selectedDate
+        const busyTimes = []; // Placeholder
         const timeSlots = [];
         const startHour = 9;
         const endHour = 17;
@@ -244,183 +243,334 @@ export default class CalendarComponent {
             for (let minute of [0, 30]) {
                 const time = new Date();
                 time.setHours(hour, minute, 0, 0);
-                
-                const formattedTime = time.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
-                
+                const formattedTime = time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                 const isBusy = busyTimes.includes(formattedTime);
                 const isSelected = this.selectedTime === formattedTime;
                 
-                timeSlots.push({
-                    time: formattedTime,
-                    isBusy,
-                    isSelected
-                });
+                timeSlots.push({ time: formattedTime, isBusy, isSelected });
             }
         }
         
-        // Generate HTML for time slots
         return timeSlots.map(slot => {
             const classes = [
-                'flex justify-start rounded-md',
+                'time-slot-btn', // Add class for easier selection
+                'flex justify-start rounded-md', 
                 'px-3 py-2 text-sm',
                 slot.isSelected ? 'bg-blue-600 text-white' : 'border hover:bg-gray-100',
-                slot.isBusy ? 'opacity-50' : ''
+                slot.isBusy ? 'opacity-50 pointer-events-none' : 'cursor-pointer' 
             ].join(' ');
             
-            return `
-                <button 
-                    class="${classes}" 
-                    data-time="${slot.time}" 
-                    ${slot.isBusy ? 'disabled' : ''}
-                >
-                    ${slot.time}
-                </button>
-            `;
+            return `<button class="${classes}" data-time="${slot.time}" ${slot.isBusy ? 'disabled' : ''}>${slot.time}</button>`;
         }).join('');
     }
 
-    // Format the selected date for display
-    formatSelectedDate() {
-        return this.selectedDate.toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric'
+    // Format a date object for display
+    formatSelectedDate(date) {
+        return date.toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric'
         });
     }
 
-    // Check if a date is today
-    isToday(year, month, day) {
-        const today = new Date();
-        return today.getFullYear() === year && 
-               today.getMonth() === month && 
-               today.getDate() === day;
-    }
-
-    // Check if a date is the selected date
+    // Check if a date matches the selected date
     isSelectedDay(year, month, day) {
         return this.selectedDate.getFullYear() === year && 
                this.selectedDate.getMonth() === month && 
                this.selectedDate.getDate() === day;
     }
+    
+    // Helper to update calendar parts (Does NOT re-attach month navigation listeners)
+    _updateCalendarView() {
+        console.log(`Updating view for month: ${this.currentMonthView.toISOString()}`);
+        
+        const monthSelector = document.getElementById('month-selector');
+        if (monthSelector) {
+            monthSelector.removeEventListener('change', this._boundHandleMonthSelect);
+            monthSelector.innerHTML = this.generateMonthOptions(this.currentMonthView);
+            monthSelector.value = `${this.currentMonthView.getMonth()},${this.currentMonthView.getFullYear()}`;
+            monthSelector.addEventListener('change', this._boundHandleMonthSelect);
+        }
 
-    // Get busy days from the database
-    getBusyDays(year, month) {
-        // In a real app, this would query the database for days with meetings
-        // For this example, we'll simulate some busy days
-        return [4, 10, 15, 22, 28];
+        const calendarDays = document.getElementById('calendar-days');
+        if (calendarDays) {
+            calendarDays.innerHTML = this.renderCalendarDays(this.currentMonthView);
+            this._setupDayListeners(); 
+        }
+
+        const availableTimesHeader = document.getElementById('available-times-header');
+        if (availableTimesHeader) {
+            availableTimesHeader.textContent = `Available Times (${this.formatSelectedDate(this.selectedDate)})`;
+        }
+
+        const timeSlotsContainer = document.getElementById('time-slots');
+        if (timeSlotsContainer) {
+            timeSlotsContainer.innerHTML = this.renderTimeSlots(this.selectedDate);
+            this._setupTimeSlotListeners(); 
+        }
+    }
+
+    // Helper to setup day listeners 
+    _setupDayListeners() {
+        document.querySelectorAll('.calendar-day').forEach(dayEl => {
+            if (dayEl.classList.contains('busy') || dayEl.classList.contains('opacity-50')) return; // Skip non-interactive days
+
+            dayEl.addEventListener('click', (e) => {
+                const dateStr = dayEl.dataset.date;
+                if (!dateStr) return;
+
+                const [year, month, day] = dateStr.split('-').map(Number);
+                this.selectedDate = new Date(year, month - 1, day); 
+                this.selectedTime = null; 
+
+                document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('bg-indigo-600', 'text-white'));
+                dayEl.classList.add('bg-indigo-600', 'text-white');
+                dayEl.classList.remove('hover:bg-gray-100');
+
+                const availableTimesHeader = document.getElementById('available-times-header');
+                if (availableTimesHeader) {
+                     availableTimesHeader.textContent = `Available Times (${this.formatSelectedDate(this.selectedDate)})`;
+                }
+                const timeSlotsContainer = document.getElementById('time-slots');
+                if (timeSlotsContainer) {
+                    timeSlotsContainer.innerHTML = this.renderTimeSlots(this.selectedDate);
+                    this._setupTimeSlotListeners(); 
+                }
+            });
+        });
+    }
+
+    // Helper to setup time slot listeners 
+    _setupTimeSlotListeners() {
+        document.querySelectorAll('.time-slot-btn').forEach(timeEl => {
+            if (timeEl.disabled) return;
+            
+            timeEl.addEventListener('click', () => {
+                this.selectedTime = timeEl.dataset.time;
+                
+                document.querySelectorAll('.time-slot-btn').forEach(el => {
+                    el.classList.remove('bg-blue-600', 'text-white');
+                    el.classList.add('border', 'hover:bg-gray-100');
+                });
+                timeEl.classList.add('bg-blue-600', 'text-white');
+                timeEl.classList.remove('border', 'hover:bg-gray-100');
+            });
+        });
+    }
+    
+    // --- Named Event Handlers --- 
+    _handlePrevClick() {
+        console.log('Previous month button clicked.'); 
+        this.currentMonthView.setMonth(this.currentMonthView.getMonth() - 1);
+        if (this.selectedDate.getMonth() !== this.currentMonthView.getMonth() || this.selectedDate.getFullYear() !== this.currentMonthView.getFullYear()) {
+             this.selectedDate = new Date(this.currentMonthView.getFullYear(), this.currentMonthView.getMonth(), 1);
+             this.selectedTime = null; 
+        }
+        this._updateCalendarView(); 
+    }
+
+    _handleNextClick() {
+        console.log('Next month button clicked.'); 
+        this.currentMonthView.setMonth(this.currentMonthView.getMonth() + 1);
+        if (this.selectedDate.getMonth() !== this.currentMonthView.getMonth() || this.selectedDate.getFullYear() !== this.currentMonthView.getFullYear()) {
+             this.selectedDate = new Date(this.currentMonthView.getFullYear(), this.currentMonthView.getMonth(), 1);
+             this.selectedTime = null; 
+        }
+        this._updateCalendarView(); 
+    }
+
+    _handleMonthSelect(e) {
+        console.log('Month selector changed by user.');
+        const [month, year] = e.target.value.split(',').map(Number);
+        if (this.currentMonthView.getMonth() !== month || this.currentMonthView.getFullYear() !== year) {
+            this.currentMonthView = new Date(year, month, 1);
+            if (this.selectedDate.getMonth() !== month || this.selectedDate.getFullYear() !== year) {
+                 this.selectedDate = new Date(year, month, 1);
+                 this.selectedTime = null; 
+            }
+            this._updateCalendarView(); 
+        } else {
+            console.log('Dropdown value matches current view, no update needed.');
+        }
+    }
+    
+    // Setup event listeners (called once after initial render)
+    setupEventListeners() {
+        console.log('[CalendarComponent] Setting up initial event listeners...'); 
+
+        document.getElementById('prev-month')?.removeEventListener('click', this._boundHandlePrevClick);
+        document.getElementById('next-month')?.removeEventListener('click', this._boundHandleNextClick);
+        document.getElementById('month-selector')?.removeEventListener('change', this._boundHandleMonthSelect);
+
+        const prevMonthBtn = document.getElementById('prev-month');
+        if (prevMonthBtn) {
+            prevMonthBtn.addEventListener('click', this._boundHandlePrevClick);
+        }
+        
+        const nextMonthBtn = document.getElementById('next-month');
+        if (nextMonthBtn) {
+            nextMonthBtn.addEventListener('click', this._boundHandleNextClick);
+        }
+
+        const monthSelector = document.getElementById('month-selector');
+        if (monthSelector) {
+            monthSelector.addEventListener('change', this._boundHandleMonthSelect);
+        }
+
+        this._setupDayListeners();
+        this._setupTimeSlotListeners();
+        
+        // --- Keep other listeners (form submit, AI, location, email) --- 
+        this.meetingForm = document.getElementById('meeting-form'); 
+        if (this.meetingForm) {
+            if (this.submitHandler) {
+                this.meetingForm.removeEventListener('submit', this.submitHandler);
+            }
+            this.submitHandler = this._handleFormSubmit.bind(this);
+            this.meetingForm.addEventListener('submit', this.submitHandler);
+        }
+
+        const generateBtn = document.getElementById('generate-purpose-btn');
+        const purposeInput = document.getElementById('purpose');
+        const purposeStatus = document.getElementById('purpose-status');
+        const locationInput = document.getElementById('location'); // Ensure locationInput is defined here too
+        const attendeesInput = document.getElementById('attendees-email'); // Ensure attendeesInput is defined
+        const nameInput = document.getElementById('name'); // Ensure nameInput is defined
+
+        if(generateBtn && purposeInput && purposeStatus && locationInput) { // Check locationInput too
+            generateBtn.addEventListener('click', async () => {
+                // ... (AI generation logic - keep as is)
+                 purposeStatus.textContent = 'Generating…';
+                purposeStatus.className = 'status';
+                const prompt = purposeInput.value.trim() ? `Refine the following meeting purpose without in plain text: "${purposeInput.value.trim()}".` : 'Write a concise meeting purpose.';
+                try {
+                    const res = await fetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+                    if (!res.ok) { const err = await res.text(); throw new Error(err || res.statusText); }
+                    const { text } = await res.json();
+                    purposeInput.value = text.replace(/\s+$/, ''); 
+                    purposeStatus.textContent = '✅ Generated!';
+                    purposeStatus.classList.add('success');
+                } catch (err) {
+                    console.error('AI generation failed:', err);
+                    purposeStatus.textContent = '❌ Generation failed.';
+                    purposeStatus.classList.add('error');
+                }
+            });
+        }
+
+        const suggBox = document.getElementById('location-suggestions');
+        if (locationInput && suggBox) { // Ensure locationInput exists
+            let debounceTimer = null;
+            locationInput.addEventListener('input', () => {
+                // ... (Location autocomplete logic - keep as is)
+                 clearTimeout(debounceTimer);
+                const q = locationInput.value.trim();
+                if (!q) { suggBox.innerHTML = ''; suggBox.classList.add('hidden'); return; }
+                debounceTimer = setTimeout(() => {
+                    fetch(`/api/autocomplete?input=${encodeURIComponent(q)}`).then(res => res.json()).then(data => {
+                        if (!data.predictions?.length) { suggBox.innerHTML = ''; suggBox.classList.add('hidden'); return; }
+                        suggBox.innerHTML = data.predictions.map(p => `<div class="px-3 py-2 hover:bg-gray-100 cursor-pointer" data-place-id="${p.place_id}">${p.description}</div>`).join('');
+                        suggBox.classList.remove('hidden');
+                    }).catch(console.error);
+                }, 300);
+            });
+            suggBox.addEventListener('click', e => {
+                const item = e.target.closest('[data-place-id]');
+                if (!item) return;
+                locationInput.value = item.textContent;
+                locationInput.dataset.placeId = item.dataset.placeId;
+                suggBox.innerHTML = '';
+                suggBox.classList.add('hidden');
+            });
+            document.addEventListener('click', e => {
+                if (!locationInput.contains(e.target) && !suggBox.contains(e.target)) { suggBox.classList.add('hidden'); }
+            });
+        }
+
+        const form = this.meetingForm; // Use the stored reference
+        if(form && nameInput && attendeesInput && locationInput && purposeInput) { // Check all needed inputs exist
+            form.addEventListener('submit', async e => {
+                // NOTE: This listener is *separate* from the main _handleFormSubmit.
+                // It seems intended for email sending *after* successful DB insert.
+                // Consider moving email logic into _handleFormSubmit's success block.
+                console.log('Secondary form submission triggered (for email?).'); 
+                // e.preventDefault(); // Prevent default only if this isn't handled by _handleFormSubmit
+
+                const message = `Meeting Request:\nLocation: ${locationInput.value}\nPurpose: ${purposeInput.value}`;
+                const name = nameInput.value;
+                const attendees = attendeesInput.value;
+                const payload = { name, attendees, message };
+
+                console.log('Email Payload:', payload); 
+
+                try {
+                    const res = await fetch('/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!res.ok) { const err = await res.text(); throw new Error(err || res.statusText); }
+                    // form.reset(); // Resetting here might clear fields before _handleFormSubmit finishes
+                } catch (err) {
+                    console.error('Send failed:', err);
+                }
+            });
+        }
     }
 
     // Define the submit handler as a class method
     async _handleFormSubmit(e) {
         e.preventDefault();
-        console.log('Form submit handler triggered.'); // Add log here
+        console.log('Form submit handler triggered (_handleFormSubmit).'); 
         
-        // Get the submit button (assuming this.meetingForm is set)
         const submitButton = this.meetingForm ? this.meetingForm.querySelector('button[type="submit"]') : null;
-
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
         const purposeInput = document.getElementById('purpose');
         const attendeesInput = document.getElementById('attendees-email');
         const locationInput = document.getElementById('location');
         
-        if (!this.selectedTime) {
-            window.showToast('Please select a time slot first', 'warning');
-            return;
-        }
-
-        if (!nameInput.value || !emailInput.value) {
-            window.showToast('Please fill out your name and email', 'warning');
-            return;
-        }
+        if (!this.selectedTime) { window.showToast('Please select a time slot first', 'warning'); return; }
+        if (!nameInput.value || !emailInput.value) { window.showToast('Please fill out your name and email', 'warning'); return; }
         
-        // Disable button
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submitting...';
-        }
+        if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Submitting...'; }
         
         try {
-            // --- Get the current user's UUID ---
             const { data: { user }, error: userError } = await supabase.auth.getUser();
-
             if (userError || !user) {
                 console.error("Error fetching user or user not logged in:", userError);
                 window.showToast('You must be logged in to create a meeting.', 'error');
-                 // Re-enable button before returning
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Confirm Meeting Request';
-                }
+                if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Confirm Meeting Request'; }
                 return;
             }
             const userUuid = user.id;
             console.log('User UUID fetched:', userUuid);
-            // --- End fetching user UUID ---
 
-            // Create a new meeting request
             const [hours, minutes] = this.selectedTime.match(/(\d+):(\d+)/).slice(1);
             const isPM = this.selectedTime.includes('PM');
-            
             const meetingDate = new Date(this.selectedDate);
-            meetingDate.setHours(
-                isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours),
-                parseInt(minutes),
-                0,
-                0
-            );
-            
+            meetingDate.setHours(isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours), parseInt(minutes), 0, 0 );
             const endDate = new Date(meetingDate);
-            endDate.setMinutes(endDate.getMinutes() + 30); // 30 min meeting by default
+            endDate.setMinutes(endDate.getMinutes() + 30); 
             
             const newMeetingData = {
-                title: purposeInput.value || 'Meeting',
-                start: meetingDate.toISOString(), // Use ISO string for Supabase timestamp
-                end: endDate.toISOString(),     // Use ISO string for Supabase timestamp
-                requesterName: nameInput.value,
-                requesterEmail: emailInput.value,
-                attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input,
-                meetingLocation: locationInput.value,
-                description: purposeInput.value,
-                status: 'pending', // Add default status
-                color: '#f59e0b',  // Add default color
-                uuid: userUuid    // <-- Add the user's UUID here
+                title: purposeInput.value || 'Meeting', start: meetingDate.toISOString(), end: endDate.toISOString(), 
+                requesterName: nameInput.value, requesterEmail: emailInput.value,
+                attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [],
+                meetingLocation: locationInput.value, description: purposeInput.value,
+                status: 'pending', color: '#f59e0b', uuid: userUuid
             };
             
-            // Insert into Supabase
-            const { data: insertedMeetings, error: insertError } = await supabase
-                .from('Meetings')
-                .insert([newMeetingData])
-                .select();
-
-            if (insertError) throw insertError; // Let the outer catch handle it
+            const { data: insertedMeetings, error: insertError } = await supabase.from('Meetings').insert([newMeetingData]).select();
+            if (insertError) throw insertError; 
 
             if (insertedMeetings && insertedMeetings.length > 0) {
-                // Add the newly created meeting to the local mockDatabase
-                // Convert start/end back to Date objects if necessary for mockDatabase consistency
-                const newMeetingForMockDb = {
-                    ...insertedMeetings[0],
-                    start: new Date(insertedMeetings[0].start),
-                    end: new Date(insertedMeetings[0].end)
-                };
-                if (window.mockDatabase && window.mockDatabase.meetings) {
-                    window.mockDatabase.meetings.push(newMeetingForMockDb);
-                    // Optionally, refresh parts of the UI if needed immediately
-                    // e.g., if calendar view needs updating: this.renderCalendarDays(); this.renderTimeSlots();
-                }
+                const newMeetingForMockDb = { ...insertedMeetings[0], start: new Date(insertedMeetings[0].start), end: new Date(insertedMeetings[0].end) };
+                if (window.mockDatabase?.meetings) { window.mockDatabase.meetings.push(newMeetingForMockDb); }
                 
                 window.showToast('Meeting request submitted successfully!', 'success');
-                this.meetingForm.reset(); // Use stored form reference
+                this.meetingForm.reset(); 
                 this.selectedTime = null;
                 const timeSlotsContainer = document.getElementById('time-slots');
                 if (timeSlotsContainer) {
-                     timeSlotsContainer.innerHTML = this.renderTimeSlots();
-                     this.setupTimeSlotListeners();
+                     timeSlotsContainer.innerHTML = this.renderTimeSlots(this.selectedDate);
+                     this._setupTimeSlotListeners();
                 }
+                // Consider calling email sending logic here after success
             } else {
                  window.showToast('Failed to submit meeting request.', 'error');
             }
@@ -428,366 +578,12 @@ export default class CalendarComponent {
             console.error('Error submitting meeting:', error);
             window.showToast(`Error: ${error.message || 'Failed to submit meeting request.'}`, 'error');
         } finally {
-            // Re-enable button
-            if (submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Confirm Meeting Request';
-            }
+            if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Confirm Meeting Request'; }
         }
     }
 
-    // Setup event listeners for the calendar component
-    setupEventListeners() {
-        console.log('[CalendarComponent] Setting up event listeners...'); // Log setup calls
-        const copyBtn = this.mainContainer.querySelector('.copy-link')
-        const tooltip = this.mainContainer.querySelector('.copy-tooltip')
-        if (copyBtn && tooltip) {
-            copyBtn.addEventListener('click', async () => {
-            // 1) get current user
-            const { data:{ user }, error:userErr } = await supabase.auth.getUser()
-            if (userErr || !user) {
-                window.showToast('Please sign in first','error')
-                return
-            }
-            // 2) upsert a slug in your new table
-            const slug = user.id      // or generate e.g. nanoid()
-            await supabase
-                .from('schedule_links')
-                .upsert({ user_id: user.id, slug })
-            // 3) build & copy the share URL
-            const shareUrl = `${location.origin}/schedule/${slug}`
-            try {
-                await navigator.clipboard.writeText(shareUrl)
-                tooltip.classList.add('opacity-100')
-                setTimeout(() => tooltip.classList.remove('opacity-100'), 2000)
-            } catch {
-                window.showToast('Copy failed','error')
-            }
-            })
-        }
-
-        // Calendar day click
-        document.querySelectorAll('.calendar-day').forEach(dayEl => {
-            dayEl.addEventListener('click', (e) => {
-                // Update selected date
-                const dateStr = dayEl.dataset.date;
-                if (dateStr) {
-                    const [year, month, day] = dateStr.split('-').map(Number);
-                    this.selectedDate = new Date(year, month - 1, day);
-                    
-                    // Update UI
-                    document.querySelectorAll('.calendar-day').forEach(el => {
-                        el.classList.remove('selected');
-                        el.classList.add('hover:bg-gray-100');
-                    });
-                    
-                    dayEl.classList.add('selected');
-                    dayEl.classList.remove('hover:bg-gray-100');
-                    
-                    // Update time slots
-                    const timeSlotsContainer = document.getElementById('time-slots');
-                    if (timeSlotsContainer) {
-                        timeSlotsContainer.innerHTML = this.renderTimeSlots();
-                        this.setupTimeSlotListeners();
-                    }
-                    
-                    // Update the displayed date
-                    const dateHeader = document.querySelector('h3');
-                    if (dateHeader) {
-                        dateHeader.textContent = `Available Times (${this.formatSelectedDate()})`;
-                    }
-                }
-            });
-        });
-        
-        // Setup time slot listeners
-        this.setupTimeSlotListeners();
-        
-        // Month selector change
-        const monthSelector = document.getElementById('month-selector');
-        if (monthSelector) {
-            monthSelector.addEventListener('change', (e) => {
-                const [month, year] = e.target.value.split(',').map(Number);
-                this.selectedDate = new Date(year, month, 1);
-                
-                // Update calendar days
-                const calendarDays = document.getElementById('calendar-days');
-                if (calendarDays) {
-                    calendarDays.innerHTML = this.renderCalendarDays();
-                    // Re-attach event listeners to new elements
-                    this.setupEventListeners();
-                }
-            });
-        }
-        
-        // Previous month button
-        const prevMonthBtn = document.getElementById('prev-month');
-        if (prevMonthBtn) {
-            prevMonthBtn.addEventListener('click', () => {
-                const currentMonth = this.selectedDate.getMonth();
-                const currentYear = this.selectedDate.getFullYear();
-                
-                this.selectedDate = new Date(currentYear, currentMonth - 1, 1);
-                
-                // Update month selector
-                const monthSelector = document.getElementById('month-selector');
-                if (monthSelector) {
-                    monthSelector.value = `${this.selectedDate.getMonth()},${this.selectedDate.getFullYear()}`;
-                }
-                
-                // Update calendar days
-                const calendarDays = document.getElementById('calendar-days');
-                if (calendarDays) {
-                    calendarDays.innerHTML = this.renderCalendarDays();
-                    // Re-attach event listeners to new elements
-                    this.setupEventListeners();
-                }
-            });
-        }
-        
-        // Next month button
-        const nextMonthBtn = document.getElementById('next-month');
-        if (nextMonthBtn) {
-            nextMonthBtn.addEventListener('click', () => {
-                const currentMonth = this.selectedDate.getMonth();
-                const currentYear = this.selectedDate.getFullYear();
-                
-                this.selectedDate = new Date(currentYear, currentMonth + 1, 1);
-                
-                // Update month selector
-                const monthSelector = document.getElementById('month-selector');
-                if (monthSelector) {
-                    monthSelector.value = `${this.selectedDate.getMonth()},${this.selectedDate.getFullYear()}`;
-                }
-                
-                // Update calendar days
-                const calendarDays = document.getElementById('calendar-days');
-                if (calendarDays) {
-                    calendarDays.innerHTML = this.renderCalendarDays();
-                    // Re-attach event listeners to new elements
-                    this.setupEventListeners();
-                }
-            });
-        }
-        
-        // Schedule button click
-        const scheduleBtn = document.getElementById('schedule-btn');
-        if (scheduleBtn) {
-            scheduleBtn.addEventListener('click', () => {
-                if (!this.selectedTime) {
-                    window.showToast('Please select a time slot first', 'warning');
-                    return;
-                }
-                
-                // Scroll to meeting details form
-                const meetingForm = document.getElementById('meeting-details-form');
-                if (meetingForm) {
-                    meetingForm.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        }
-        
-        // Meeting form submission - with cleanup
-        this.meetingForm = document.getElementById('meeting-form'); // Store form reference
-        if (this.meetingForm) {
-            // Remove the previous listener if it exists
-            if (this.submitHandler) {
-                console.log('[CalendarComponent] Removing previous submit listener.');
-                this.meetingForm.removeEventListener('submit', this.submitHandler);
-            }
-            
-            // Create and store the new bound listener
-            this.submitHandler = this._handleFormSubmit.bind(this);
-            
-            // Add the new listener
-            console.log('[CalendarComponent] Adding new submit listener.');
-            this.meetingForm.addEventListener('submit', this.submitHandler);
-        }
-        
-        // Copy schedule link functionality
-        const copyB = document.querySelector('.copy-link');
-        if (copyB) {
-            copyB.addEventListener('click', () => {
-                navigator.clipboard.writeText('https://TimeBridge.example/u/johndoe')
-                    .then(() => {
-                        window.showToast('Schedule link copied to clipboard!', 'success');
-                    })
-                    .catch(() => {
-                        window.showToast('Failed to copy link', 'error');
-                    });
-            });
-        }
-
-        // AI generation button functionality
-        const generateBtn   = document.getElementById('generate-purpose-btn');
-        const purposeInput  = document.getElementById('purpose');
-        const purposeStatus = document.getElementById('purpose-status');
-
-        generateBtn.addEventListener('click', async () => {
-            // 1) Kick off generation
-            purposeStatus.textContent = 'Generating…';
-            purposeStatus.className = 'status';
-
-            // 2) Build a prompt from the meeting context (you can tweak this)
-            const location = locationInput.value.trim();
-            const prompt = purposeInput.value.trim()
-            ? `Refine the following meeting purpose without in plain text: "${purposeInput.value.trim()}".`
-            : 'Write a concise meeting purpose.';
-
-            try {
-            // 3) Call your /generate endpoint
-            const res = await fetch('/generate', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ prompt })
-            });
-
-            if (!res.ok) {
-                const err = await res.text();
-                throw new Error(err || res.statusText);
-            }
-
-            const { text } = await res.json();
-
-            // 4) Insert the AI-generated text
-            purposeInput.value = text.replace(/\s+$/, ''); 
-            purposeStatus.textContent = '✅ Generated!';
-            purposeStatus.classList.add('success');
-
-            } catch (err) {
-            console.error('AI generation failed:', err);
-            purposeStatus.textContent = '❌ Generation failed.';
-            purposeStatus.classList.add('error');
-            }
-        });
-        
-
-        // Location API Implementation
-        const locationInput = document.getElementById('location');
-        const suggBox       = document.getElementById('location-suggestions');
-        if (locationInput && suggBox) {
-        let debounceTimer = null;
-        
-        // 1) Fetch suggestions as user types
-        locationInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            const q = locationInput.value.trim();
-            if (!q) {
-            suggBox.innerHTML = '';
-            suggBox.classList.add('hidden');
-            return;
-            }
-            debounceTimer = setTimeout(() => {
-            fetch(`/api/autocomplete?input=${encodeURIComponent(q)}`)
-                .then(res => res.json())
-                .then(data => {
-                if (!data.predictions?.length) {
-                    suggBox.innerHTML = '';
-                    suggBox.classList.add('hidden');
-                    return;
-                }
-                suggBox.innerHTML = data.predictions
-                    .map(p => `
-                    <div
-                        class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                        data-place-id="${p.place_id}"
-                    >${p.description}</div>
-                    `).join('');
-                suggBox.classList.remove('hidden');
-                })
-                .catch(console.error);
-            }, 300);
-        });
-        
-        // 2) Handle click on a suggestion
-        suggBox.addEventListener('click', e => {
-            const item = e.target.closest('[data-place-id]');
-            if (!item) return;
-            locationInput.value = item.textContent;
-            locationInput.dataset.placeId = item.dataset.placeId;
-            suggBox.innerHTML = '';
-            suggBox.classList.add('hidden');
-        });
-        
-        // 3) Hide suggestions when clicking elsewhere
-        document.addEventListener('click', e => {
-            if (
-            !locationInput.contains(e.target) &&
-            !suggBox.contains(e.target)
-            ) {
-            suggBox.classList.add('hidden');
-            }
-        });
-        }
-
-        // EMAIL API Implementation
-        const nameInput = document.getElementById('name');
-        const attendeesInput = document.getElementById('attendees-email');
-        const form = document.getElementById('meeting-form');
-        form.addEventListener('submit', async e => {
-            console.log('Form submission triggered.'); // Add log here
-            e.preventDefault();
-
-            // Use form inputs
-            // nameInput, attendeesInput, locationInput, purposeInput
-
-            // Build the message body
-            const message = 
-            `Meeting Request:\n` +
-            `Location: ${locationInput.value}\n` + 
-            `Purpose: ${purposeInput.value}`;
-
-            const name = nameInput.value
-            const attendees = attendeesInput.value;
-
-            // Match your /send-email payload
-            const payload = {
-            name,           // Host’s name
-            attendees,      // Receiver email(s)
-            message              // Meeting details
-            };
-
-            console.log('Payload:', payload); // Log the payload for debugging
-
-            try {
-            const res = await fetch('/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                const err = await res.text();
-                throw new Error(err || res.statusText);
-            }
-            form.reset();
-            } catch (err) {
-            console.error('Send failed:', err);
-            }
-        });
-        
-    }
-    
-    // Setup time slot click listeners (separate method because we need to reattach after updating)
-    setupTimeSlotListeners() {
-        document.querySelectorAll('[data-time]').forEach(timeEl => {
-            if (timeEl.disabled) return;
-            
-            timeEl.addEventListener('click', () => {
-                // Update selected time
-                this.selectedTime = timeEl.dataset.time;
-                
-                // Update UI
-                document.querySelectorAll('[data-time]').forEach(el => {
-                    if (el.dataset.time === this.selectedTime) {
-                        el.classList.remove('border', 'hover:bg-gray-100');
-                        el.classList.add('bg-blue-600', 'text-white');
-                    } else {
-                        el.classList.remove('bg-blue-600', 'text-white');
-                        el.classList.add('border', 'hover:bg-gray-100');
-                    }
-                });
-            });
-        });
-    }
+    // --- Other existing methods like getDayName, getBusyDays, isToday, etc. ---
+    getDayName(dayOffset) { const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; const today = new Date(); const futureDate = new Date(today); futureDate.setDate(today.getDate() + dayOffset); return days[futureDate.getDay()]; }
+    getBusyDays(year, month) { return []; } // Currently returns no busy days
+    isToday(year, month, day) { const today = new Date(); return today.getFullYear() === year && today.getMonth() === month && today.getDate() === day; }
 } 

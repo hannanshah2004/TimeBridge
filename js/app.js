@@ -5,12 +5,28 @@ import CalendarComponent from './components/calendar.js';
 import MeetingsComponent from './components/meetings.js';
 
 async function fetchMeetings() {
-    let { data: meetingsData, error } = await supabase.from('Meetings').select('*');
+    // --- Get current user's UUID first ---
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (error) {
-        console.error("Error fetching meetings:", error);
+    if (userError || !user) {
+        console.error("Error fetching user or no user logged in for fetching meetings:", userError);
+        return []; // Return empty array if no user is logged in
+    }
+    const userUuid = user.id;
+    console.log(`Fetching meetings for user UUID: ${userUuid}`);
+    // --- End fetching user UUID ---
+
+    // --- Fetch meetings filtered by user UUID ---
+    let { data: meetingsData, error: meetingsError } = await supabase
+        .from('Meetings')
+        .select('*')
+        .eq('uuid', userUuid); // Filter by the user's UUID
+
+    if (meetingsError) {
+        console.error("Error fetching meetings:", meetingsError);
         return [];
     }
+    // --- End fetching meetings ---
 
     // Convert timestamp strings to Date objects
     const meetings = meetingsData.map(meeting => ({
@@ -19,7 +35,7 @@ async function fetchMeetings() {
         end: new Date(meeting.end)
     }));
 
-    console.log("Fetched and processed meetings:", meetings);
+    console.log("Fetched and processed meetings for user:", meetings);
     return meetings;
 }
 
@@ -173,17 +189,13 @@ async function initApplication(mockDatabase) {
     if (window.location.pathname.includes('dashboard.html')) {
         setupMainContainer();
         setupNavigation();
-        loadView('dashboard');
-        setupGlobalEventListeners();
         
-        // Update user initials in the UI if needed
-        if (userEmail) {
-            const userInitials = document.getElementById('user-initials');
-            if (userInitials) {
-                const initials = await auth.getUserInitials(userEmail);
-                userInitials.textContent = initials;
-            }
-        }
+        // --- Call setupUserMenu here ---
+        await auth.setupUserMenu(); // Setup the user menu and sign-out button
+        // --- End call ---
+        
+        loadView('dashboard'); // Load initial view AFTER menu is set up
+        setupGlobalEventListeners();
     }
 }
 

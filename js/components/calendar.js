@@ -233,7 +233,7 @@ export default class CalendarComponent {
     renderTimeSlots() {
         // In a real app, available times would come from the database
         // Here we'll simulate some busy times
-        const busyTimes = ['10:00 AM', '2:00 PM', '3:30 PM'];
+        const busyTimes = [];
         
         // Generate time slots from 9 AM to 5 PM in 30-minute increments
         const timeSlots = [];
@@ -344,41 +344,60 @@ export default class CalendarComponent {
             submitButton.textContent = 'Submitting...';
         }
         
-        // Create a new meeting request
-        const [hours, minutes] = this.selectedTime.match(/(\d+):(\d+)/).slice(1);
-        const isPM = this.selectedTime.includes('PM');
-        
-        const meetingDate = new Date(this.selectedDate);
-        meetingDate.setHours(
-            isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours),
-            parseInt(minutes),
-            0,
-            0
-        );
-        
-        const endDate = new Date(meetingDate);
-        endDate.setMinutes(endDate.getMinutes() + 30); // 30 min meeting by default
-        
-        const newMeetingData = {
-            title: purposeInput.value || 'Meeting',
-            start: meetingDate.toISOString(), // Use ISO string for Supabase timestamp
-            end: endDate.toISOString(),     // Use ISO string for Supabase timestamp
-            requesterName: nameInput.value,
-            requesterEmail: emailInput.value,
-            attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input,
-            meetingLocation: locationInput.value,
-            description: purposeInput.value,
-            status: 'pending', // Add default status
-            color: '#f59e0b'  // Add default color
-        };
-        
         try {
-            const { data: insertedMeetings, error } = await supabase
+            // --- Get the current user's UUID ---
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !user) {
+                console.error("Error fetching user or user not logged in:", userError);
+                window.showToast('You must be logged in to create a meeting.', 'error');
+                 // Re-enable button before returning
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Confirm Meeting Request';
+                }
+                return;
+            }
+            const userUuid = user.id;
+            console.log('User UUID fetched:', userUuid);
+            // --- End fetching user UUID ---
+
+            // Create a new meeting request
+            const [hours, minutes] = this.selectedTime.match(/(\d+):(\d+)/).slice(1);
+            const isPM = this.selectedTime.includes('PM');
+            
+            const meetingDate = new Date(this.selectedDate);
+            meetingDate.setHours(
+                isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours),
+                parseInt(minutes),
+                0,
+                0
+            );
+            
+            const endDate = new Date(meetingDate);
+            endDate.setMinutes(endDate.getMinutes() + 30); // 30 min meeting by default
+            
+            const newMeetingData = {
+                title: purposeInput.value || 'Meeting',
+                start: meetingDate.toISOString(), // Use ISO string for Supabase timestamp
+                end: endDate.toISOString(),     // Use ISO string for Supabase timestamp
+                requesterName: nameInput.value,
+                requesterEmail: emailInput.value,
+                attendees: attendeesInput.value ? attendeesInput.value.split(',').map(email => email.trim()) : [], // Handle empty input,
+                meetingLocation: locationInput.value,
+                description: purposeInput.value,
+                status: 'pending', // Add default status
+                color: '#f59e0b',  // Add default color
+                uuid: userUuid    // <-- Add the user's UUID here
+            };
+            
+            // Insert into Supabase
+            const { data: insertedMeetings, error: insertError } = await supabase
                 .from('Meetings')
                 .insert([newMeetingData])
                 .select();
 
-            if (error) throw error;
+            if (insertError) throw insertError; // Let the outer catch handle it
 
             if (insertedMeetings && insertedMeetings.length > 0) {
                 // Add the newly created meeting to the local mockDatabase

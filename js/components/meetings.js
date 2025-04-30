@@ -3,20 +3,43 @@ export default class MeetingsComponent {
     constructor(database) {
         this.database = database;
         this.mainContainer = document.getElementById('main-content');
+        this.allMeetings = this.database.meetings || []; // Store all meetings for filtering
     }
 
     // Render the meetings view
-    render() {
-        console.log('[MeetingsComponent.render] Using this.database.meetings:', this.database ? this.database.meetings : 'database not found'); // LOG 5
+    render(filteredMeetings = null) { // Accept optional filtered list
+        // console.log('[MeetingsComponent.render] Using this.database.meetings:', this.database ? this.database.meetings : 'database not found'); // LOG 5
         if (!this.mainContainer) {
              console.error('[MeetingsComponent.render] Main container not found');
              return;
         }
 
-        const upcomingMeetings = this.database.getUpcomingMeetings();
-        const laterMeetings = this.database.getLaterMeetings();
-        console.log('[MeetingsComponent.render] Filtered meetings (upcoming, later):', upcomingMeetings, laterMeetings); // LOG 6
+        // Determine which meetings to display
+        let meetingsToDisplay;
+        let laterMeetingsToDisplay = [];
+        let upcomingTitle = 'This Week'; // Default title
+        let showLaterSection = true;
         
+        const selectedFilter = document.getElementById('meeting-filter-select')?.value || 'all';
+
+        if (filteredMeetings) {
+            // If a pre-filtered list is provided (e.g., from dropdown change)
+            meetingsToDisplay = filteredMeetings;
+            showLaterSection = false; // Hide later section when specific filter is active
+            // Update title based on filter
+            switch (selectedFilter) {
+                case 'today': upcomingTitle = "Today's Meetings"; break;
+                case 'week': upcomingTitle = "This Week's Meetings"; break;
+                case 'month': upcomingTitle = "This Month's Meetings"; break;
+                default: upcomingTitle = "Filtered Meetings"; break;
+            }
+        } else {
+            // Default view: Use getUpcomingMeetings and getLaterMeetings
+            meetingsToDisplay = this.database.getUpcomingMeetings();
+            laterMeetingsToDisplay = this.database.getLaterMeetings();
+            // console.log('[MeetingsComponent.render] Filtered meetings (upcoming, later):', meetingsToDisplay, laterMeetingsToDisplay); // LOG 6
+        }
+
         this.mainContainer.innerHTML = `
             <div class="container mx-auto px-4 py-8">
                 <div class="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
@@ -29,14 +52,14 @@ export default class MeetingsComponent {
                 <!-- Upcoming Meetings Section -->
                 <div class="rounded-lg border bg-white p-6 shadow-sm">
                     <div class="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                        <h2 class="text-xl font-semibold">This Week</h2>
+                        <h2 id="upcoming-meetings-title" class="text-xl font-semibold">${upcomingTitle}</h2> 
                         
                         <div class="flex items-center gap-2">
-                            <select class="h-10 rounded-md border px-3 py-2 text-sm">
-                                <option>All Meetings</option>
-                                <option>Today</option>
-                                <option>This Week</option>
-                                <option>This Month</option>
+                            <select id="meeting-filter-select" class="h-10 rounded-md border px-3 py-2 text-sm">
+                                <option value="all" ${selectedFilter === 'all' ? 'selected' : ''}>All Meetings</option>
+                                <option value="today" ${selectedFilter === 'today' ? 'selected' : ''}>Today</option>
+                                <option value="week" ${selectedFilter === 'week' ? 'selected' : ''}>This Week</option>
+                                <option value="month" ${selectedFilter === 'month' ? 'selected' : ''}>This Month</option>
                             </select>
                             
                             <button class="flex h-10 items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-gray-50">
@@ -47,16 +70,16 @@ export default class MeetingsComponent {
                     </div>
                     
                     <div class="space-y-4" id="upcoming-meetings-container">
-                        ${this.renderMeetingsList(upcomingMeetings)}
+                        ${this.renderMeetingsList(meetingsToDisplay)} 
                     </div>
                 </div>
                 
                 <!-- Later Meetings Section -->
-                <div class="mt-8 rounded-lg border bg-white p-6 shadow-sm">
-                    <h2 class="mb-4 text-xl font-semibold">Later This Month</h2>
+                <div id="later-meetings-section" class="mt-8 rounded-lg border bg-white p-6 shadow-sm ${showLaterSection ? '' : 'hidden'}">
+                    <h2 class="mb-4 text-xl font-semibold">Later Meetings</h2> 
                     
                     <div class="space-y-4" id="later-meetings-container">
-                        ${this.renderMeetingsList(laterMeetings)}
+                        ${this.renderMeetingsList(laterMeetingsToDisplay)} 
                     </div>
                 </div>
             </div>
@@ -144,8 +167,50 @@ export default class MeetingsComponent {
         }).join('');
     }
 
+    // Filter meetings based on selected dropdown value
+    _filterMeetingsBySelection(filter) {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        const allUserMeetings = this.database.meetings || []; // Use the full list
+
+        switch (filter) {
+            case 'today':
+                const endOfToday = new Date(now);
+                endOfToday.setHours(23, 59, 59, 999);
+                return allUserMeetings.filter(m => m.start >= now && m.start <= endOfToday && m.status !== 'canceled');
+            case 'week':
+                const endOfWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                endOfWeek.setHours(23, 59, 59, 999);
+                return allUserMeetings.filter(m => m.start >= now && m.start <= endOfWeek && m.status !== 'canceled');
+            case 'month':
+                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                endOfMonth.setHours(23, 59, 59, 999);
+                return allUserMeetings.filter(m => m.start >= now && m.start <= endOfMonth && m.status !== 'canceled');
+            case 'all':
+            default:
+                return null; // Indicate no filter, so render uses default sections
+        }
+    }
+
     // Setup event listeners for the meetings component
     setupEventListeners() {
+        // --- Add Filter Dropdown Listener ---
+        const filterSelect = document.getElementById('meeting-filter-select');
+        if (filterSelect) {
+            filterSelect.addEventListener('change', (e) => {
+                const selectedFilter = e.target.value;
+                if (selectedFilter === 'all') {
+                    // Re-render with default sections
+                    this.render(); 
+                } else {
+                    // Filter the meetings and re-render with the filtered list
+                    const filtered = this._filterMeetingsBySelection(selectedFilter);
+                    this.render(filtered); 
+                }
+            });
+        }
+        // --- End Filter Dropdown Listener ---
+
         // Meeting card click handlers
         document.querySelectorAll('.meeting-card').forEach(card => {
             card.addEventListener('click', (e) => {

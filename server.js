@@ -4,7 +4,9 @@ const dotenv = require('dotenv');
 const path = require('path');
 const axios = require('axios'); // For making HTTP requests to WeatherAPI
 const cors = require('cors'); // Add CORS middleware
+const sgMail = require('@sendgrid/mail')
 const { createClient } = require('@supabase/supabase-js');
+const { GoogleGenAI } = require('@google/genai');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -15,7 +17,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 const WEATHER_API_BASE_URL = 'http://api.weatherapi.com/v1';
-const Google_API_KEY = process.env.GOOGLE_API_KEY; // Google API key for geocoding
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; // Google API key for geocoding
+const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY; // Google AI API key for Gemini
+sgMail.setApiKey(process.env.EMAIL_API_KEY) // SendGrid API key for sending emails
 
 // Check for essential environment variables
 if (!SUPABASE_URL || !SUPABASE_KEY || !WEATHER_API_KEY) {
@@ -66,6 +70,49 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// == GOOGLE AI ENDPOINTS ==
+const ai = new GoogleGenAI({apiKey: GOOGLE_AI_API_KEY})// Your Google API key
+app.post('/generate', async (req, res) => {
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: 'Missing prompt parameter' });
+    }
+  
+    try {
+      const response = await ai.models.generateContent({
+        model:    'gemini-2.0-flash',
+        contents: prompt,
+      });
+      return res.json({ text: response.text });
+    } catch (err) {
+      console.error('Gemini error:', err);
+      return res.status(500).json({ error: 'Generation failed' });
+    }
+  });
+
+
+
+// == EMAIL API Endpoints ==
+app.post('/send-email', async (req, res) => {
+    const { name, email, message } = req.body
+  
+    const msg = {
+      to:      email,     // your receiving address
+      from:    'ha504@scarletmail.rutgers.edu',    // a verified sender on your SendGrid account
+      subject: `New message from ${name}`,
+      text:    message,
+      html:    `<p>${message.replace(/\n/g, '<br>')}</p>`
+    }
+  
+    try {
+      await sgMail.send(msg)
+      res.json({ ok: true })
+    } catch (err) {
+      console.error('SendGrid error:', err)
+      res.status(500).send('Email send failed')
+    }
+  })
+
 // == Google API Endpoints ==
 app.get('/api/autocomplete', async (req, res) => {
     const { input } = req.query;
@@ -77,7 +124,7 @@ app.get('/api/autocomplete', async (req, res) => {
         {
           params: {
             input,
-            key: process.env.GOOGLE_API_KEY,
+            key: GOOGLE_API_KEY,
             // optionally restrict by country or types:
             // components: 'country:us',
             // types: '(cities)'

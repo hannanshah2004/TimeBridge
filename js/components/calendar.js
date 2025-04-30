@@ -16,137 +16,148 @@ export default class CalendarComponent {
 
         this.mainContainer.innerHTML = `
             <div class="container mx-auto px-4 py-8">
-                <div class="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+            <div class="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                <div>
+                <h1 class="text-3xl font-bold tracking-tight">Calendar</h1>
+                <p class="text-gray-500">Schedule new meetings and manage your availability</p>
+                </div>
+            </div>
+
+            <!-- Calendar Section -->
+            <div class="rounded-lg border bg-white p-6 shadow-sm">
+                <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <h2 class="text-xl font-semibold">Select Date & Time</h2>
+                
+                <div class="flex items-center gap-2">
+                    <button id="prev-month" class="flex h-8 items-center justify-center rounded-md border px-3 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+                    <span class="sr-only">Previous Month</span>
+                    </button>
+                    
+                    <select id="month-selector" class="h-10 rounded-md border px-3 py-2">
+                    ${this.generateMonthOptions()}
+                    </select>
+                    
+                    <button id="next-month" class="flex h-8 items-center justify-center rounded-md border px-3 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
+                    <span class="sr-only">Next Month</span>
+                    </button>
+                </div>
+                </div>
+                
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <!-- Calendar -->
+                <div class="rounded-lg border p-4">
+                    <div class="mb-4 grid grid-cols-7 gap-1 text-center text-sm font-medium">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-7 gap-1" id="calendar-days">
+                    ${this.renderCalendarDays()}
+                    </div>
+                </div>
+                
+                <!-- Time slots -->
+                <div class="rounded-lg border p-4">
+                    <h3 class="mb-4 text-lg font-medium">Available Times (${this.formatSelectedDate()})</h3>
+                    
+                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3" id="time-slots">
+                    ${this.renderTimeSlots()}
+                    </div>
+                </div>
+                </div>
+                
+                <!-- Meeting details form -->
+                <div class="mt-6 rounded-lg border p-6" id="meeting-details-form">
+                <h3 class="mb-4 text-lg font-medium">Meeting Details</h3>
+                
+                <form class="space-y-4" id="meeting-form">
                     <div>
-                        <h1 class="text-3xl font-bold tracking-tight">Calendar</h1>
-                        <p class="text-gray-500">Schedule new meetings and manage your availability</p>
-                    </div>
-                </div>
-
-                <!-- Calendar Section -->
-                <div class="rounded-lg border bg-white p-6 shadow-sm">
-                    <div class="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                        <h2 class="text-xl font-semibold">Select Date & Time</h2>
-                        
-                        <div class="flex items-center gap-2">
-                            <button id="prev-month" class="flex h-8 items-center justify-center rounded-md border px-3 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
-                                <span class="sr-only">Previous Month</span>
-                            </button>
-                            
-                            <select id="month-selector" class="h-10 rounded-md border px-3 py-2">
-                                ${this.generateMonthOptions()}
-                            </select>
-                            
-                            <button id="next-month" class="flex h-8 items-center justify-center rounded-md border px-3 text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
-                                <span class="sr-only">Next Month</span>
-                            </button>
-                        </div>
+                    <label for="name" class="mb-1 block text-sm font-medium">Your Name</label>
+                    <input 
+                        type="text" 
+                        id="name" 
+                        class="w-full rounded-md border px-3 py-2"
+                        placeholder="Enter your name"
+                    />
                     </div>
                     
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <!-- Calendar -->
-                        <div class="rounded-lg border p-4">
-                            <div class="mb-4 grid grid-cols-7 gap-1 text-center text-sm font-medium">
-                                <div>Sun</div>
-                                <div>Mon</div>
-                                <div>Tue</div>
-                                <div>Wed</div>
-                                <div>Thu</div>
-                                <div>Fri</div>
-                                <div>Sat</div>
-                            </div>
-                            
-                            <div class="grid grid-cols-7 gap-1" id="calendar-days">
-                                ${this.renderCalendarDays()}
-                            </div>
-                        </div>
-                        
-                        <!-- Time slots -->
-                        <div class="rounded-lg border p-4">
-                            <h3 class="mb-4 text-lg font-medium">Available Times (${this.formatSelectedDate()})</h3>
-                            
-                            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3" id="time-slots">
-                                ${this.renderTimeSlots()}
-                            </div>
-                            
-                        </div>
+                    <div>
+                    <label for="email" class="mb-1 block text-sm font-medium">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="w-full rounded-md border px-3 py-2"
+                        placeholder="you@example.com"
+                    />
+                    </div>
+
+                    <div>
+                    <label for="attendees-email" class="mb-1 block text-sm font-medium">Attendee Email(s)</label>
+                    <input 
+                        type="text" 
+                        id="attendees-email" 
+                        class="w-full rounded-md border px-3 py-2"
+                        placeholder="a@example.com, b@example.com"
+                    />
+                    </div>
+
+                    <div>
+                    <label for="location" class="mb-1 block text-sm font-medium">Location</label>
+                    <div class="relative">
+                        <input 
+                        type="text" 
+                        id="location" 
+                        class="w-full rounded-md border px-3 py-2"
+                        placeholder="Enter meeting location"
+                        autocomplete="off"
+                        />
+                        <!-- suggestions dropdown -->
+                        <div id="location-suggestions" 
+                        class="absolute bg-white z-10 w-full max-h-48 overflow-y-auto border rounded-md mt-1 hidden"
+                        ></div>
+                    </div>
+                    </div>
+                               
+                    <div>
+                    <label for="purpose" class="mb-1 block text-sm font-medium">Meeting Purpose</label>
+                    <div class="flex gap-2">
+                        <textarea 
+                        id="purpose" 
+                        rows="3"
+                        class="w-full rounded-md border px-3 py-2"
+                        placeholder="Briefly describe the purpose of this meeting"
+                        ></textarea>
+                        <!-- AI generate button -->
+                        <button
+                        type="button"
+                        id="generate-purpose-btn"
+                        class="rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                        >
+                        Generate with AI
+                        </button>
+                        <!-- status for the AI generation -->
+                        <p id="purpose-status" class="mt-1 text-sm status"></p>
+                    </div>
                     </div>
                     
-                    <!-- Meeting details form -->
-                    <div class="mt-6 rounded-lg border p-6" id="meeting-details-form">
-                        <h3 class="mb-4 text-lg font-medium">Meeting Details</h3>
-                        
-                        <form class="space-y-4" id="meeting-form">
-                            <div>
-                                <label for="name" class="mb-1 block text-sm font-medium">Your Name</label>
-                                <input 
-                                    type="text" 
-                                    id="name" 
-                                    class="w-full rounded-md border px-3 py-2"
-                                    placeholder="Enter your name"
-                                />
-                            </div>
-                            
-                            <div>
-                                <label for="email" class="mb-1 block text-sm font-medium">Email Address</label>
-                                <input 
-                                    type="email" 
-                                    id="email" 
-                                    class="w-full rounded-md border px-3 py-2"
-                                    placeholder="you@example.com"
-                                />
-                            </div>
-
-                            <div>
-                                <label for="attendees-email" class="mb-1 block text-sm font-medium">Attendee Email(s)</label>
-                                <input 
-                                    type="text" 
-                                    id="attendees-email" 
-                                    class="w-full rounded-md border px-3 py-2"
-                                    placeholder="a@example.com, b@example.com"
-                                />
-                            </div>
-
-                            <div>
-                                <label for="location" class="mb-1 block text-sm font-medium">Location</label>
-                                <div class="relative">
-                                    <input 
-                                    type="text" 
-                                    id="location" 
-                                    class="w-full rounded-md border px-3 py-2"
-                                    placeholder="Enter meeting location"
-                                    autocomplete="off"
-                                    />
-                                    <!-- suggestions dropdown -->
-                                    <div id="location-suggestions" 
-                                    class="absolute bg-white z-10 w-full max-h-48 overflow-y-auto border rounded-md mt-1 hidden"
-                                    ></div>
-                                </div>
-                            </div>
-                                                   
-                            <div>
-                                <label for="purpose" class="mb-1 block text-sm font-medium">Meeting Purpose</label>
-                                <textarea 
-                                    id="purpose" 
-                                    rows="3"
-                                    class="w-full rounded-md border px-3 py-2"
-                                    placeholder="Briefly describe the purpose of this meeting"
-                                ></textarea>
-                            </div>
-                            
-                            <div class="pt-2">
-                                <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-                                    Confirm Meeting Request
-                                </button>
-                                <p class="mt-2 text-center text-sm text-gray-500">
-                                    You'll receive an email confirmation once the host approves
-                                </p>
-                            </div>
-                        </form>
+                    <div class="pt-2">
+                    <button type="submit" class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+                        Confirm Meeting Request
+                    </button>
+                    <p class="mt-2 text-center text-sm text-gray-500">
+                        You'll receive an email confirmation once the host approves
+                    </p>
                     </div>
+                </form>
                 </div>
+            </div>
             </div>
         `;}
     
@@ -588,62 +599,154 @@ export default class CalendarComponent {
             });
         }
 
-    const locationInput = document.getElementById('location');
-    const suggBox       = document.getElementById('location-suggestions');
-    if (locationInput && suggBox) {
-      let debounceTimer = null;
-      
-      // 1) Fetch suggestions as user types
-      locationInput.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        const q = locationInput.value.trim();
-        if (!q) {
-          suggBox.innerHTML = '';
-          suggBox.classList.add('hidden');
-          return;
+        // AI generation button functionality
+        const generateBtn   = document.getElementById('generate-purpose-btn');
+        const purposeInput  = document.getElementById('purpose');
+        const purposeStatus = document.getElementById('purpose-status');
+
+        generateBtn.addEventListener('click', async () => {
+            // 1) Kick off generation
+            purposeStatus.textContent = 'Generating…';
+            purposeStatus.className = 'status';
+
+            // 2) Build a prompt from the meeting context (you can tweak this)
+            const location = locationInput.value.trim();
+            const prompt = purposeInput.value.trim()
+            ? `Refine the following meeting purpose without in plain text: "${purposeInput.value.trim()}".`
+            : 'Write a concise meeting purpose.';
+
+            try {
+            // 3) Call your /generate endpoint
+            const res = await fetch('/generate', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ prompt })
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                throw new Error(err || res.statusText);
+            }
+
+            const { text } = await res.json();
+
+            // 4) Insert the AI-generated text
+            purposeInput.value = text.replace(/\s+$/, ''); 
+            purposeStatus.textContent = '✅ Generated!';
+            purposeStatus.classList.add('success');
+
+            } catch (err) {
+            console.error('AI generation failed:', err);
+            purposeStatus.textContent = '❌ Generation failed.';
+            purposeStatus.classList.add('error');
+            }
+        });
+        
+
+        // Location API Implementation
+        const locationInput = document.getElementById('location');
+        const suggBox       = document.getElementById('location-suggestions');
+        if (locationInput && suggBox) {
+        let debounceTimer = null;
+        
+        // 1) Fetch suggestions as user types
+        locationInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const q = locationInput.value.trim();
+            if (!q) {
+            suggBox.innerHTML = '';
+            suggBox.classList.add('hidden');
+            return;
+            }
+            debounceTimer = setTimeout(() => {
+            fetch(`/api/autocomplete?input=${encodeURIComponent(q)}`)
+                .then(res => res.json())
+                .then(data => {
+                if (!data.predictions?.length) {
+                    suggBox.innerHTML = '';
+                    suggBox.classList.add('hidden');
+                    return;
+                }
+                suggBox.innerHTML = data.predictions
+                    .map(p => `
+                    <div
+                        class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                        data-place-id="${p.place_id}"
+                    >${p.description}</div>
+                    `).join('');
+                suggBox.classList.remove('hidden');
+                })
+                .catch(console.error);
+            }, 300);
+        });
+        
+        // 2) Handle click on a suggestion
+        suggBox.addEventListener('click', e => {
+            const item = e.target.closest('[data-place-id]');
+            if (!item) return;
+            locationInput.value = item.textContent;
+            locationInput.dataset.placeId = item.dataset.placeId;
+            suggBox.innerHTML = '';
+            suggBox.classList.add('hidden');
+        });
+        
+        // 3) Hide suggestions when clicking elsewhere
+        document.addEventListener('click', e => {
+            if (
+            !locationInput.contains(e.target) &&
+            !suggBox.contains(e.target)
+            ) {
+            suggBox.classList.add('hidden');
+            }
+        });
         }
-        debounceTimer = setTimeout(() => {
-          fetch(`/api/autocomplete?input=${encodeURIComponent(q)}`)
-            .then(res => res.json())
-            .then(data => {
-              if (!data.predictions?.length) {
-                suggBox.innerHTML = '';
-                suggBox.classList.add('hidden');
-                return;
-              }
-              suggBox.innerHTML = data.predictions
-                .map(p => `
-                  <div
-                    class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                    data-place-id="${p.place_id}"
-                  >${p.description}</div>
-                `).join('');
-              suggBox.classList.remove('hidden');
-            })
-            .catch(console.error);
-        }, 300);
-      });
-      
-      // 2) Handle click on a suggestion
-      suggBox.addEventListener('click', e => {
-        const item = e.target.closest('[data-place-id]');
-        if (!item) return;
-        locationInput.value = item.textContent;
-        locationInput.dataset.placeId = item.dataset.placeId;
-        suggBox.innerHTML = '';
-        suggBox.classList.add('hidden');
-      });
-      
-      // 3) Hide suggestions when clicking elsewhere
-      document.addEventListener('click', e => {
-        if (
-          !locationInput.contains(e.target) &&
-          !suggBox.contains(e.target)
-        ) {
-          suggBox.classList.add('hidden');
-        }
-      });
-    }
+
+        // EMAIL API Implementation
+        const nameInput = document.getElementById('name');
+        const attendeesInput = document.getElementById('attendees-email');
+        const form = document.getElementById('meeting-form');
+        form.addEventListener('submit', async e => {
+            console.log('Form submission triggered.'); // Add log here
+            e.preventDefault();
+
+            // Use form inputs
+            // nameInput, attendeesInput, locationInput, purposeInput
+
+            // Build the message body
+            const message = 
+            `Meeting Request:\n` +
+            `Location: ${locationInput.value}\n` + 
+            `Purpose: ${purposeInput.value}`;
+
+            const name = nameInput.value
+            const attendees = attendeesInput.value;
+
+            // Match your /send-email payload
+            const payload = {
+            name,           // Host’s name
+            attendees,      // Receiver email(s)
+            message              // Meeting details
+            };
+
+            console.log('Payload:', payload); // Log the payload for debugging
+
+            try {
+            const res = await fetch('/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                throw new Error(err || res.statusText);
+            }
+            form.reset();
+            } catch (err) {
+            console.error('Send failed:', err);
+            }
+        });
+        
     }
     
     // Setup time slot click listeners (separate method because we need to reattach after updating)

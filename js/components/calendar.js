@@ -631,7 +631,7 @@ export default class CalendarComponent {
             // 2) Build a prompt from the meeting context (you can tweak this)
             const location = locationInput.value.trim();
             const prompt = purposeInput.value.trim()
-            ? `Refine the following meeting purpose without in plain text: "${purposeInput.value.trim()}".`
+            ? `Refine the following meeting purpose without in plain text and no formatting, keep it short: "${purposeInput.value.trim()}".`
             : 'Write a concise meeting purpose.';
 
             try {
@@ -721,50 +721,65 @@ export default class CalendarComponent {
         }
 
         // EMAIL API Implementation
-        const nameInput = document.getElementById('name');
-        const attendeesInput = document.getElementById('attendees-email');
-        const form = document.getElementById('meeting-form');
+        const form             = document.getElementById('meeting-form');
+        const nameInput        = document.getElementById('name');
+        const attendeesInput   = document.getElementById('attendees-email');
+
+        // only attach if we haven't already
+        if (!form.dataset.listenerAttached) {
         form.addEventListener('submit', async e => {
-            console.log('Form submission triggered.'); // Add log here
             e.preventDefault();
-
-            // Use form inputs
-            // nameInput, attendeesInput, locationInput, purposeInput
-
-            // Build the message body
-            const message = 
-            `Meeting Request:\n` +
-            `Location: ${locationInput.value}\n` + 
-            `Purpose: ${purposeInput.value}`;
-
-            const name = nameInput.value
-            const attendees = attendeesInput.value;
-
-            // Match your /send-email payload
+            console.log('Form submission triggered.');
+          
+            // pull values
+            const name     = nameInput.value.trim();
+            const rawEmails = attendeesInput.value;
+            const location = locationInput.value.trim();
+            const purpose  = purposeInput.value.trim();
+          
+            // if you allow multiple comma-separated emails, convert into an array
+            const emailList = rawEmails
+              .split(/[,;\s]+/)
+              .map(e => e.trim())
+              .filter(e => e);
+          
+            // Build message body
+            const message = [
+              `Host: ${name}`,
+              `Location: ${location}`,
+              `Purpose : ${purpose}`
+            ].join('\n');
+          
             const payload = {
-            name,           // Host’s name
-            attendees,      // Receiver email(s)
-            message              // Meeting details
+              name,
+              // SendGrid accepts either a string or an array here:
+              email: emailList.length > 1 ? emailList : emailList[0],
+              message
             };
-
-            console.log('Payload:', payload); // Log the payload for debugging
-
+          
+            console.log('Payload →', payload);
+          
             try {
-            const res = await fetch('/send-email', {
-                method: 'POST',
+              const res = await fetch('http://localhost:3000/send-email', {
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                const err = await res.text();
-                throw new Error(err || res.statusText);
-            }
-            form.reset();
+                body:    JSON.stringify(payload)
+              });
+          
+              if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || res.statusText);
+              }
+          
+              console.log('Email sent successfully!');
+              form.reset();
             } catch (err) {
-            console.error('Send failed:', err);
+              console.error('Send failed:', err);
+              alert('Sorry, could not send email:\n' + err.message);
             }
         });
+        form.dataset.listenerAttached = 'true';
+        }
         
     }
     

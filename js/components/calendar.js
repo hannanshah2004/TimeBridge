@@ -483,26 +483,44 @@ export default class CalendarComponent {
         const attendeesInput = document.getElementById('attendees-email'); // Ensure attendeesInput is defined
         const nameInput = document.getElementById('name'); // Ensure nameInput is defined
 
-        if(generateBtn && purposeInput && purposeStatus && locationInput) { // Check locationInput too
-            generateBtn.addEventListener('click', async () => {
-                // ... (AI generation logic - keep as is)
-                 purposeStatus.textContent = 'Generating…';
-                purposeStatus.className = 'status';
-                const prompt = purposeInput.value.trim() ? `Refine the following meeting purpose without in plain text: "${purposeInput.value.trim()}".` : 'Write a concise meeting purpose.';
-                try {
-                    const res = await fetch('/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
-                    if (!res.ok) { const err = await res.text(); throw new Error(err || res.statusText); }
-                    const { text } = await res.json();
-                    purposeInput.value = text.replace(/\s+$/, ''); 
-                    purposeStatus.textContent = '✅ Generated!';
-                    purposeStatus.classList.add('success');
-                } catch (err) {
-                    console.error('AI generation failed:', err);
-                    purposeStatus.textContent = '❌ Generation failed.';
-                    purposeStatus.classList.add('error');
-                }
+        generateBtn.addEventListener('click', async () => {
+            // 1) Kick off generation
+            purposeStatus.textContent = 'Generating…';
+            purposeStatus.className = 'status';
+
+            // 2) Build a prompt from the meeting context (you can tweak this)
+            const location = locationInput.value.trim();
+            const prompt = purposeInput.value.trim()
+            ? `Refine the following meeting purpose without in plain text and no formatting, keep it short: "${purposeInput.value.trim()}".`
+            : 'Write a concise meeting purpose.';
+
+            try {
+            // 3) Call your /generate endpoint
+            const res = await fetch('/generate', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ prompt })
             });
-        }
+
+            if (!res.ok) {
+                const err = await res.text();
+                throw new Error(err || res.statusText);
+            }
+
+            const { text } = await res.json();
+
+            // 4) Insert the AI-generated text
+            purposeInput.value = text.replace(/\s+$/, ''); 
+            purposeStatus.textContent = '✅ Generated!';
+            purposeStatus.classList.add('success');
+
+            } catch (err) {
+            console.error('AI generation failed:', err);
+            purposeStatus.textContent = '❌ Generation failed.';
+            purposeStatus.classList.add('error');
+            }
+        });
+        
 
         const suggBox = document.getElementById('location-suggestions');
         if (locationInput && suggBox) { // Ensure locationInput exists

@@ -144,7 +144,7 @@ export default class CalendarComponent {
                         <button
                         type="button"
                         id="generate-purpose-btn"
-                        class="rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                        class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                         >
                         Generate with AI
                         </button>

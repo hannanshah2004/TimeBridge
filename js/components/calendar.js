@@ -222,7 +222,7 @@ export default class CalendarComponent {
     renderTimeSlots() {
         // In a real app, available times would come from the database
         // Here we'll simulate some busy times
-        const busyTimes = ['10:00 AM', '2:00 PM', '3:30 PM'];
+        const busyTimes = [];
         
         // Generate time slots from 9 AM to 5 PM in 30-minute increments
         const timeSlots = [];

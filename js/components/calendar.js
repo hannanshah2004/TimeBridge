@@ -200,67 +200,111 @@ export default class CalendarComponent {
     renderCalendarDays(viewDate) {
         const year = viewDate.getFullYear();
         const month = viewDate.getMonth();
-        
+
         const firstDayOfMonth = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
+
+        // Get today's date (set to midnight for accurate day comparison)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const busyDays = this.getBusyDays(year, month);
-        
+
         let calendarHTML = '';
-        
+
         // Add empty cells
         for (let i = 0; i < firstDayOfMonth; i++) {
             calendarHTML += '<div class="h-10 rounded-md p-1"></div>';
         }
-        
+
         // Add calendar days
         for (let day = 1; day <= daysInMonth; day++) {
+            const currentDate = new Date(year, month, day);
+            currentDate.setHours(0, 0, 0, 0); // Set to midnight for comparison
+
             const isSelected = this.isSelectedDay(year, month, day);
             const isBusy = busyDays.includes(day);
-            
-            const classes = [
-                'calendar-day',
-                'flex h-10 cursor-pointer items-center justify-center rounded-md p-1 text-sm',
-                isSelected ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100',
-                isBusy ? 'busy relative opacity-50 pointer-events-none' : '' // Keeping the original busy style for now
-            ].join(' ');
-            
-            calendarHTML += `<div class="${classes}" data-date="${year}-${month+1}-${day}">${day}</div>`;
+            const isPast = currentDate < today; // Check if the day is in the past
+
+            const classes = ['calendar-day', 'flex h-10 items-center justify-center rounded-md p-1 text-sm'];
+
+            if (isPast) {
+                classes.push('opacity-50', 'pointer-events-none', 'past-day'); // Style past days
+            } else {
+                classes.push('cursor-pointer'); // Only add cursor pointer for non-past days
+                if (isSelected) {
+                    classes.push('bg-indigo-600', 'text-white');
+                } else {
+                    classes.push('hover:bg-gray-100');
+                }
+                if (isBusy) {
+                    // Apply busy styles only if not a past day
+                    classes.push('busy', 'relative', 'opacity-50', 'pointer-events-none'); // Keep original busy style
+                }
+            }
+
+            calendarHTML += `<div class="${classes.join(' ')}" data-date="${year}-${month + 1}-${day}">${day}</div>`;
         }
-        
+
         return calendarHTML;
     }
 
     // Render time slots for a specific selected date
     renderTimeSlots(selectedDate) {
-        // TODO: Fetch actual availability based on selectedDate
         const busyTimes = []; // Placeholder
         const timeSlots = [];
         const startHour = 9;
         const endHour = 17;
         
+        // Get current date and time
+        const now = new Date();
+        // Check if the selected date is today
+        const isSelectedDateToday = selectedDate.getFullYear() === now.getFullYear() &&
+                                 selectedDate.getMonth() === now.getMonth() &&
+                                 selectedDate.getDate() === now.getDate();
+
         for (let hour = startHour; hour < endHour; hour++) {
             for (let minute of [0, 30]) {
-                const time = new Date();
+                const time = new Date(); // Use a new date object for each slot
                 time.setHours(hour, minute, 0, 0);
                 const formattedTime = time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                
+                // Create a full DateTime object for the slot on the selected date
+                const slotDateTime = new Date(selectedDate);
+                slotDateTime.setHours(hour, minute, 0, 0);
+
                 const isBusy = busyTimes.includes(formattedTime);
                 const isSelected = this.selectedTime === formattedTime;
+                // Check if the slot is in the past *for today*
+                const isPastTime = isSelectedDateToday && slotDateTime < now;
                 
-                timeSlots.push({ time: formattedTime, isBusy, isSelected });
+                timeSlots.push({ 
+                    time: formattedTime, 
+                    isBusy, 
+                    isSelected, 
+                    isPast: isPastTime // Add past status
+                });
             }
         }
         
         return timeSlots.map(slot => {
+            const isNonInteractive = slot.isBusy || slot.isPast;
             const classes = [
-                'time-slot-btn', // Add class for easier selection
+                'time-slot-btn', 
                 'flex justify-start rounded-md', 
                 'px-3 py-2 text-sm',
-                slot.isSelected ? 'bg-blue-600 text-white' : 'border hover:bg-gray-100',
-                slot.isBusy ? 'opacity-50 pointer-events-none' : 'cursor-pointer' 
-            ].join(' ');
+                slot.isSelected ? 'bg-blue-600 text-white' : 'border',
+                isNonInteractive ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-gray-100'
+            ];
+            // Remove hover effect if selected but not past/busy
+            if (slot.isSelected && !isNonInteractive) {
+                const hoverIndex = classes.indexOf('hover:bg-gray-100');
+                if (hoverIndex > -1) classes.splice(hoverIndex, 1);
+                 const borderIndex = classes.indexOf('border');
+                if (borderIndex > -1) classes.splice(borderIndex, 1);
+            }
             
-            return `<button class="${classes}" data-time="${slot.time}" ${slot.isBusy ? 'disabled' : ''}>${slot.time}</button>`;
+            return `<button class="${classes.join(' ')}" data-time="${slot.time}" ${isNonInteractive ? 'disabled' : ''}>${slot.time}</button>`;
         }).join('');
     }
 
@@ -311,7 +355,11 @@ export default class CalendarComponent {
     // Helper to setup day listeners 
     _setupDayListeners() {
         document.querySelectorAll('.calendar-day').forEach(dayEl => {
-            if (dayEl.classList.contains('busy') || dayEl.classList.contains('opacity-50')) return; // Skip non-interactive days
+            // Skip past days and potentially busy days if they are non-interactive
+            if (dayEl.classList.contains('past-day') || 
+                dayEl.classList.contains('pointer-events-none')) { 
+                return; 
+            }
 
             dayEl.addEventListener('click', (e) => {
                 const dateStr = dayEl.dataset.date;

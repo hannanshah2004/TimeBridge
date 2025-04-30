@@ -544,8 +544,8 @@ export default class CalendarComponent {
 
                 const message = `Meeting Request:\nLocation: ${locationInput.value}\nPurpose: ${purposeInput.value}`;
                 const name = nameInput.value;
-                const attendees = attendeesInput.value;
-                const payload = { name, attendees, message };
+                const email = attendeesInput.value;
+                const payload = { name, email, message };
 
                 console.log('Email Payload:', payload); 
 

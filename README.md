@@ -1,84 +1,167 @@
 # TimeBridge - Meeting Scheduling Application
 
-TimeBridge is a user-friendly scheduling application built with HTML, CSS, JavaScript, and Tailwind CSS. It allows users to create and manage meeting requests with a beautiful calendar interface.
+TimeBridge is a user-friendly scheduling application that helps you manage your meetings and availability with a beautiful calendar interface. It's built with modern web technologies and offers smart features to streamline your scheduling workflow.
 
 ![TimeBridge Screenshot](https://via.placeholder.com/800x400?text=TimeBridge+Screenshot)
 
 ## Features
 
-- 📅 **Interactive Calendar**: View and manage your schedule with an interactive calendar
-- 📨 **Email Notifications**: Receive email notifications for meeting confirmations (simulated)
+- 📅 **Interactive Calendar**: View and manage your schedule with a responsive, intuitive calendar
+- ⚡ **Smart Scheduling**: Set your availability and let others book time with you
+- 🤖 **AI-Powered**: Generate meeting descriptions automatically with Google's Gemini AI
+- 🌦️ **Weather Integration**: View weather conditions for meeting days
+- 📍 **Location Suggestions**: Easily add meeting locations with Google Places autocomplete
+- 📨 **Email Notifications**: Receive notifications for meeting confirmations via SendGrid
 - ✅ **Meeting Management**: Approve, reschedule, or cancel meeting requests
-- 🔗 **Shareable Link**: Copy your schedule link to share with others
-- 📱 **Responsive Design**: Works on desktop and mobile devices
-- 🌐 **No Server Required**: Frontend-only implementation for easy deployment
+- 🔗 **Shareable Links**: Copy your schedule link to share with others
 
 ## Project Structure
 
 ```
 timebridge/
-├── index.html              # Main dashboard page
+├── server.js               # Express backend server
+├── index.html              # Authentication page
+├── dashboard.html          # Main dashboard interface
 ├── booking.html            # Meeting booking page for invitees
 ├── css/
 │   └── styles.css          # Custom CSS styles
 ├── js/
-│   └── app.js              # Main JavaScript functionality
-├── database-integration.md # Guide for database integration
-└── README.md               # Project documentation
+│   ├── app.js              # Main application script
+│   ├── auth.js             # Authentication utilities
+│   ├── supabaseClient.js   # Supabase database client
+│   ├── apiClient.js        # API client for external services
+│   └── components/         # Reusable UI components
+│       ├── calendar.js     # Calendar component
+│       ├── meetings.js     # Meetings list component
+│       └── weather.js      # Weather widget component
+└── tests/                  # Jest tests
+    └── weather.test.js     # Tests for weather component
 ```
 
 ## Getting Started
 
-1. Clone the repository or download the files
-2. Open `index.html` in your browser to view the dashboard
-3. Open `booking.html` to see the booking page that others would use
+### Prerequisites
 
-No build process or server is required for basic functionality as this is a frontend-only implementation.
+- Node.js 16+ and npm
+- Supabase account (free tier works fine)
+- Optional API keys:
+  - Google Places API for location autocomplete
+  - Google Gemini AI for generating meeting descriptions
+  - WeatherAPI for weather information
+  - SendGrid for email notifications
 
-## Customization
+### Installation
 
-### Colors and Styling
+1. Clone the repository
+   ```
+   git clone https://github.com/yourusername/timebridge.git
+   cd timebridge
+   ```
 
-The application uses Tailwind CSS for styling. You can customize the colors and appearance by modifying the Tailwind classes in the HTML files or by adding custom styles in `css/styles.css`.
+2. Install dependencies
+   ```
+   npm install
+   ```
 
-### Database Integration
+3. Create a `.env` file in the root directory with your API keys:
+   ```
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_KEY=your_supabase_key
+   WEATHER_API_KEY=your_weather_api_key
+   GOOGLE_API_KEY=your_google_places_api_key
+   GOOGLE_AI_API_KEY=your_gemini_api_key
+   EMAIL_API_KEY=your_sendgrid_api_key
+   ```
 
-For a real application, you'll want to integrate with a database to store meeting data. See `database-integration.md` for detailed instructions on how to connect TimeBridge with different types of databases:
+4. Start the development server
+   ```
+   npm run dev
+   ```
 
-- JSON file storage (simple)
-- SQLite (lightweight)
-- MySQL/PostgreSQL (production)
+5. Open your browser to `http://localhost:3000`
 
-## How It Works
+## Database Setup
+
+TimeBridge uses Supabase as its backend database. To set up the required tables:
+
+1. Create a Supabase project
+2. Create a `Meetings` table with the following schema:
+   - `id`: UUID (primary key)
+   - `uuid`: UUID (user ID)
+   - `title`: Text
+   - `start`: Timestamp
+   - `end`: Timestamp
+   - `requesterName`: Text
+   - `requesterEmail`: Text
+   - `attendees`: Text[]
+   - `description`: Text
+   - `meetingLocation`: Text
+   - `status`: Text (enum: 'pending', 'approved', 'canceled')
+   - `color`: Text
+
+## Usage
+
+### Authentication
+
+TimeBridge offers user authentication via Supabase Auth:
+- Sign up with your email and password
+- Sign in to access your dashboard
+- "Remember me" functionality for convenience
 
 ### Dashboard
 
-The dashboard displays upcoming meetings and provides a calendar view of your schedule. You can:
+The dashboard provides an overview of your upcoming meetings and important information:
+- Current weather conditions
+- Upcoming meetings list
+- Quick actions for your meetings
 
-- View pending and approved meetings
+### Calendar View
+
+The calendar view gives you a detailed look at your schedule:
+- Month and week views
+- Create new meetings
+- Set your availability
+- See busy times
+
+### Meeting Management
+
+Manage all your meetings efficiently:
+- View meeting details
 - Approve or decline meeting requests
-- Reschedule meetings
-- Share your booking link
+- Cancel existing meetings
+- Filter meetings by time period (today, this week, this month)
 
-### Booking Page
+## Testing
 
-The booking page allows others to request meetings with you. They can:
+TimeBridge uses Jest for testing components. To run the tests:
 
-- View your availability on the calendar
-- Select an available time slot
-- Fill out a form with meeting details
-- Submit a meeting request
+```
+npm test
+```
 
-### Meeting Lifecycle
+We have configured Jest with Babel to support ES modules in our testing environment.
 
-1. A visitor requests a meeting through your booking page
-2. You receive a notification of the pending meeting
-3. You can approve, reschedule, or cancel the request
-4. The requester receives a notification of your decision
+## Technologies Used
+
+- **Frontend**: HTML, CSS, JavaScript, Tailwind CSS
+- **Backend**: Node.js, Express
+- **Database**: Supabase (PostgreSQL)
+- **Calendar**: FullCalendar
+- **Weather**: WeatherAPI
+- **AI**: Google Gemini
+- **Location**: Google Places API
+- **Email**: SendGrid
+- **Testing**: Jest
 
 ## Contributing
 
-Contributions are welcome! Feel free to submit a pull request or open an issue for bugs or feature requests.
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
@@ -88,4 +171,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Tailwind CSS](https://tailwindcss.com/) for the styling framework
 - [FullCalendar](https://fullcalendar.io/) for the calendar component
-- [Font Awesome](https://fontawesome.com/) for the icons 
+- [Font Awesome](https://fontawesome.com/) for the icons

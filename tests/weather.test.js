@@ -1,8 +1,8 @@
 // tests/weather.test.js
-import WeatherComponent from '../components/WeatherComponent';
-import { weatherApi } from '../apiClient';
+import WeatherComponent from '../js/components/weather.js';
+import { weatherApi } from '../js/apiClient.js';
 
-jest.mock('../apiClient', () => ({
+jest.mock('../js/apiClient.js', () => ({
   weatherApi: {
     getCurrentWeather: jest.fn(),
     getForecast: jest.fn()

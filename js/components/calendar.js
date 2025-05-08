@@ -1,17 +1,15 @@
 import supabase from "../supabaseClient.js";
 
-// Calendar Component for TimeBridge
 export default class CalendarComponent {
     constructor(database) {
         this.database = database;
         this.mainContainer = document.getElementById('main-content');
         this.selectedDate = new Date(); 
-        this.currentMonthView = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), 1); // Date representing the month being viewed
+        this.currentMonthView = new Date(this.selectedDate.getFullYear(), this.selectedDate.getMonth(), 1);
         this.selectedTime = null;
         this.submitHandler = null; 
         this.meetingForm = null;   
         
-        // Bound event handlers for static elements
         this._boundHandlePrevClick = this._handlePrevClick.bind(this);
         this._boundHandleNextClick = this._handleNextClick.bind(this);
         this._boundHandleMonthSelect = this._handleMonthSelect.bind(this);
@@ -19,7 +17,6 @@ export default class CalendarComponent {
 
     render() {
         if (!this.mainContainer) return;
-        // Use currentMonthView for generating month options
         const monthOptions = this.generateMonthOptions(this.currentMonthView);
         
         this.mainContainer.innerHTML = `
@@ -166,11 +163,9 @@ export default class CalendarComponent {
             </div>
             </div>
         `;
-        // Setup initial event listeners after full render
         this.setupEventListeners();
     }
     
-    // Generate month options based on a starting view date
     generateMonthOptions(viewDate) {
         const months = [
             'January', 'February', 'March', 'April', 'May', 'June', 
@@ -181,13 +176,11 @@ export default class CalendarComponent {
         const viewMonth = viewDate.getMonth();
 
         let options = '';
-        // Generate options for a range around the current view, e.g., +/- 6 months
         for (let i = -6; i <= 6; i++) {
             const targetDate = new Date(viewYear, viewMonth + i, 1);
             const monthIndex = targetDate.getMonth();
             const year = targetDate.getFullYear();
             const value = `${monthIndex},${year}`;
-            // Check if this option matches the current month being viewed
             const selected = monthIndex === viewMonth && year === viewYear ? 'selected' : '';
             
             options += `<option value="${value}" ${selected}>${months[monthIndex]} ${year}</option>`;
@@ -196,7 +189,6 @@ export default class CalendarComponent {
         return options;
     }
 
-    // Render calendar days for a specific month view
     renderCalendarDays(viewDate) {
         const year = viewDate.getFullYear();
         const month = viewDate.getMonth();
@@ -204,7 +196,6 @@ export default class CalendarComponent {
         const firstDayOfMonth = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // Get today's date (set to midnight for accurate day comparison)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
@@ -212,34 +203,31 @@ export default class CalendarComponent {
 
         let calendarHTML = '';
 
-        // Add empty cells
         for (let i = 0; i < firstDayOfMonth; i++) {
             calendarHTML += '<div class="h-10 rounded-md p-1"></div>';
         }
 
-        // Add calendar days
         for (let day = 1; day <= daysInMonth; day++) {
             const currentDate = new Date(year, month, day);
-            currentDate.setHours(0, 0, 0, 0); // Set to midnight for comparison
+            currentDate.setHours(0, 0, 0, 0);
 
             const isSelected = this.isSelectedDay(year, month, day);
             const isBusy = busyDays.includes(day);
-            const isPast = currentDate < today; // Check if the day is in the past
+            const isPast = currentDate < today;
 
             const classes = ['calendar-day', 'flex h-10 items-center justify-center rounded-md p-1 text-sm'];
 
             if (isPast) {
-                classes.push('opacity-50', 'pointer-events-none', 'past-day'); // Style past days
+                classes.push('opacity-50', 'pointer-events-none', 'past-day');
             } else {
-                classes.push('cursor-pointer'); // Only add cursor pointer for non-past days
+                classes.push('cursor-pointer');
                 if (isSelected) {
                     classes.push('bg-indigo-600', 'text-white');
                 } else {
                     classes.push('hover:bg-gray-100');
                 }
                 if (isBusy) {
-                    // Apply busy styles only if not a past day
-                    classes.push('busy', 'relative', 'opacity-50', 'pointer-events-none'); // Keep original busy style
+                    classes.push('busy', 'relative', 'opacity-50', 'pointer-events-none');
                 }
             }
 
@@ -249,40 +237,35 @@ export default class CalendarComponent {
         return calendarHTML;
     }
 
-    // Render time slots for a specific selected date
     renderTimeSlots(selectedDate) {
-        const busyTimes = []; // Placeholder
+        const busyTimes = [];
         const timeSlots = [];
         const startHour = 9;
         const endHour = 17;
         
-        // Get current date and time
         const now = new Date();
-        // Check if the selected date is today
         const isSelectedDateToday = selectedDate.getFullYear() === now.getFullYear() &&
                                  selectedDate.getMonth() === now.getMonth() &&
                                  selectedDate.getDate() === now.getDate();
 
         for (let hour = startHour; hour < endHour; hour++) {
             for (let minute of [0, 30]) {
-                const time = new Date(); // Use a new date object for each slot
+                const time = new Date();
                 time.setHours(hour, minute, 0, 0);
                 const formattedTime = time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                 
-                // Create a full DateTime object for the slot on the selected date
                 const slotDateTime = new Date(selectedDate);
                 slotDateTime.setHours(hour, minute, 0, 0);
 
                 const isBusy = busyTimes.includes(formattedTime);
                 const isSelected = this.selectedTime === formattedTime;
-                // Check if the slot is in the past *for today*
                 const isPastTime = isSelectedDateToday && slotDateTime < now;
                 
                 timeSlots.push({ 
                     time: formattedTime, 
                     isBusy, 
                     isSelected, 
-                    isPast: isPastTime // Add past status
+                    isPast: isPastTime
                 });
             }
         }
@@ -296,7 +279,6 @@ export default class CalendarComponent {
                 slot.isSelected ? 'bg-blue-600 text-white' : 'border',
                 isNonInteractive ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-gray-100'
             ];
-            // Remove hover effect if selected but not past/busy
             if (slot.isSelected && !isNonInteractive) {
                 const hoverIndex = classes.indexOf('hover:bg-gray-100');
                 if (hoverIndex > -1) classes.splice(hoverIndex, 1);
@@ -308,21 +290,18 @@ export default class CalendarComponent {
         }).join('');
     }
 
-    // Format a date object for display
     formatSelectedDate(date) {
         return date.toLocaleDateString('en-US', {
             month: 'long', day: 'numeric', year: 'numeric'
         });
     }
 
-    // Check if a date matches the selected date
     isSelectedDay(year, month, day) {
         return this.selectedDate.getFullYear() === year && 
                this.selectedDate.getMonth() === month && 
                this.selectedDate.getDate() === day;
     }
     
-    // Helper to update calendar parts (Does NOT re-attach month navigation listeners)
     _updateCalendarView() {
         console.log(`Updating view for month: ${this.currentMonthView.toISOString()}`);
         
@@ -352,10 +331,8 @@ export default class CalendarComponent {
         }
     }
 
-    // Helper to setup day listeners 
     _setupDayListeners() {
         document.querySelectorAll('.calendar-day').forEach(dayEl => {
-            // Skip past days and potentially busy days if they are non-interactive
             if (dayEl.classList.contains('past-day') || 
                 dayEl.classList.contains('pointer-events-none')) { 
                 return; 
@@ -386,7 +363,6 @@ export default class CalendarComponent {
         });
     }
 
-    // Helper to setup time slot listeners 
     _setupTimeSlotListeners() {
         document.querySelectorAll('.time-slot-btn').forEach(timeEl => {
             if (timeEl.disabled) return;
@@ -404,7 +380,6 @@ export default class CalendarComponent {
         });
     }
     
-    // --- Named Event Handlers --- 
     _handlePrevClick() {
         console.log('Previous month button clicked.'); 
         this.currentMonthView.setMonth(this.currentMonthView.getMonth() - 1);
@@ -440,7 +415,6 @@ export default class CalendarComponent {
         }
     }
     
-    // Setup event listeners (called once after initial render)
     setupEventListeners() {
         console.log('[CalendarComponent] Setting up initial event listeners...'); 
 
@@ -466,7 +440,6 @@ export default class CalendarComponent {
         this._setupDayListeners();
         this._setupTimeSlotListeners();
         
-        // --- Keep other listeners (form submit, AI, location, email) --- 
         this.meetingForm = document.getElementById('meeting-form'); 
         if (this.meetingForm) {
             if (this.submitHandler) {
@@ -484,18 +457,15 @@ export default class CalendarComponent {
         const nameInput = document.getElementById('name'); // Ensure nameInput is defined
 
         generateBtn.addEventListener('click', async () => {
-            // 1) Kick off generation
             purposeStatus.textContent = 'Generating…';
             purposeStatus.className = 'status';
 
-            // 2) Build a prompt from the meeting context (you can tweak this)
             const location = locationInput.value.trim();
             const prompt = purposeInput.value.trim()
             ? `Refine the following meeting purpose without in plain text and no formatting, keep it short: "${purposeInput.value.trim()}".`
             : 'Write a concise meeting purpose.';
 
             try {
-            // 3) Call your /generate endpoint
             const res = await fetch('/generate', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -509,7 +479,6 @@ export default class CalendarComponent {
 
             const { text } = await res.json();
 
-            // 4) Insert the AI-generated text
             purposeInput.value = text.replace(/\s+$/, ''); 
             purposeStatus.textContent = '✅ Generated!';
             purposeStatus.classList.add('success');
@@ -526,8 +495,7 @@ export default class CalendarComponent {
         if (locationInput && suggBox) { // Ensure locationInput exists
             let debounceTimer = null;
             locationInput.addEventListener('input', () => {
-                // ... (Location autocomplete logic - keep as is)
-                 clearTimeout(debounceTimer);
+                clearTimeout(debounceTimer);
                 const q = locationInput.value.trim();
                 if (!q) { suggBox.innerHTML = ''; suggBox.classList.add('hidden'); return; }
                 debounceTimer = setTimeout(() => {
@@ -551,14 +519,10 @@ export default class CalendarComponent {
             });
         }
 
-        const form = this.meetingForm; // Use the stored reference
-        if(form && nameInput && attendeesInput && locationInput && purposeInput) { // Check all needed inputs exist
+        const form = this.meetingForm;
+        if(form && nameInput && attendeesInput && locationInput && purposeInput) { 
             form.addEventListener('submit', async e => {
-                // NOTE: This listener is *separate* from the main _handleFormSubmit.
-                // It seems intended for email sending *after* successful DB insert.
-                // Consider moving email logic into _handleFormSubmit's success block.
                 console.log('Secondary form submission triggered (for email?).'); 
-                // e.preventDefault(); // Prevent default only if this isn't handled by _handleFormSubmit
 
                 const message = `Meeting Request:\nLocation: ${locationInput.value}\nPurpose: ${purposeInput.value}`;
                 const name = nameInput.value;
@@ -570,7 +534,6 @@ export default class CalendarComponent {
                 try {
                     const res = await fetch('/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!res.ok) { const err = await res.text(); throw new Error(err || res.statusText); }
-                    // form.reset(); // Resetting here might clear fields before _handleFormSubmit finishes
                 } catch (err) {
                     console.error('Send failed:', err);
                 }
@@ -578,7 +541,6 @@ export default class CalendarComponent {
         }
     }
 
-    // Define the submit handler as a class method
     async _handleFormSubmit(e) {
         e.preventDefault();
         console.log('Form submit handler triggered (_handleFormSubmit).'); 
@@ -612,40 +574,36 @@ export default class CalendarComponent {
             meetingDate.setHours(isPM && hours !== '12' ? parseInt(hours) + 12 : hours === '12' && !isPM ? 0 : parseInt(hours), parseInt(minutes), 0, 0 );
             const meetingStartISO = meetingDate.toISOString();
             
-            // --- ADD DUPLICATE CHECK HERE ---
             console.log(`Checking for existing meetings for user ${userUuid} at ${meetingStartISO}`);
             const { data: existingMeetings, error: checkError } = await supabase
                 .from('Meetings')
-                .select('id, start, status') // Select only needed fields
+                .select('id, start, status') 
                 .eq('uuid', userUuid)
                 .eq('start', meetingStartISO)
-                // .neq('status', 'canceled'); // Optionally ignore canceled meetings
 
             if (checkError) {
                 console.error('Error checking for duplicate meetings:', checkError);
                 window.showToast(`Error checking schedule: ${checkError.message}`, 'error');
                 if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Confirm Meeting Request'; }
-                return; // Stop if we couldn't check
+                return;
             }
 
-            // Filter out canceled meetings locally if needed (if not done in the query)
             const activeExistingMeetings = existingMeetings.filter(m => m.status !== 'canceled');
 
             if (activeExistingMeetings.length > 0) {
                 console.warn('Duplicate meeting detected:', activeExistingMeetings);
                 window.showToast('This time slot is already booked.', 'warning');
                 if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Confirm Meeting Request'; }
-                return; // Stop submission
+                return;
             }
             console.log('No duplicate meetings found for this time slot.');
-            // --- END DUPLICATE CHECK ---
             
             const endDate = new Date(meetingDate);
             endDate.setMinutes(endDate.getMinutes() + 30); 
             
             const newMeetingData = {
                 title: purposeInput.value || 'Meeting', 
-                start: meetingStartISO, // Use the ISO string calculated earlier
+                start: meetingStartISO, 
                 end: endDate.toISOString(), 
                 requesterName: nameInput.value, 
                 requesterEmail: emailInput.value,
@@ -672,7 +630,6 @@ export default class CalendarComponent {
                      timeSlotsContainer.innerHTML = this.renderTimeSlots(this.selectedDate);
                      this._setupTimeSlotListeners();
                 }
-                // Consider calling email sending logic here after success
             } else {
                  window.showToast('Failed to submit meeting request.', 'error');
             }
@@ -684,8 +641,7 @@ export default class CalendarComponent {
         }
     }
 
-    // --- Other existing methods like getDayName, getBusyDays, isToday, etc. ---
     getDayName(dayOffset) { const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; const today = new Date(); const futureDate = new Date(today); futureDate.setDate(today.getDate() + dayOffset); return days[futureDate.getDay()]; }
-    getBusyDays(year, month) { return []; } // Currently returns no busy days
+    getBusyDays(year, month) { return []; }
     isToday(year, month, day) { const today = new Date(); return today.getFullYear() === year && today.getMonth() === month && today.getDate() === day; }
 } 

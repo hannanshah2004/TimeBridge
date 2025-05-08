@@ -1,32 +1,26 @@
-// Meetings Component for TimeBridge
 export default class MeetingsComponent {
     constructor(database) {
         this.database = database;
         this.mainContainer = document.getElementById('main-content');
-        this.allMeetings = this.database.meetings || []; // Store all meetings for filtering
+        this.allMeetings = this.database.meetings || [];
     }
 
-    // Render the meetings view
-    render(filteredMeetings = null) { // Accept optional filtered list
-        // console.log('[MeetingsComponent.render] Using this.database.meetings:', this.database ? this.database.meetings : 'database not found'); // LOG 5
+    render(filteredMeetings = null) {
         if (!this.mainContainer) {
              console.error('[MeetingsComponent.render] Main container not found');
              return;
         }
 
-        // Determine which meetings to display
         let meetingsToDisplay;
         let laterMeetingsToDisplay = [];
-        let upcomingTitle = 'This Week'; // Default title
+        let upcomingTitle = 'This Week';
         let showLaterSection = true;
         
         const selectedFilter = document.getElementById('meeting-filter-select')?.value || 'all';
 
         if (filteredMeetings) {
-            // If a pre-filtered list is provided (e.g., from dropdown change)
             meetingsToDisplay = filteredMeetings;
-            showLaterSection = false; // Hide later section when specific filter is active
-            // Update title based on filter
+            showLaterSection = false;
             switch (selectedFilter) {
                 case 'today': upcomingTitle = "Today's Meetings"; break;
                 case 'week': upcomingTitle = "This Week's Meetings"; break;
@@ -34,10 +28,8 @@ export default class MeetingsComponent {
                 default: upcomingTitle = "Filtered Meetings"; break;
             }
         } else {
-            // Default view: Use getUpcomingMeetings and getLaterMeetings
             meetingsToDisplay = this.database.getUpcomingMeetings();
             laterMeetingsToDisplay = this.database.getLaterMeetings();
-            // console.log('[MeetingsComponent.render] Filtered meetings (upcoming, later):', meetingsToDisplay, laterMeetingsToDisplay); // LOG 6
         }
 
         this.mainContainer.innerHTML = `
@@ -85,11 +77,9 @@ export default class MeetingsComponent {
             </div>
         `;
 
-        // Setup event listeners after rendering
         this.setupEventListeners();
     }
 
-    // Render meetings list into cards
     renderMeetingsList(meetings) {
         if (!meetings || meetings.length === 0) {
             return '<p class="text-center text-gray-500 py-4">No meetings found</p>';
@@ -99,7 +89,6 @@ export default class MeetingsComponent {
             const startDate = new Date(meeting.start);
             const endDate = new Date(meeting.end);
             
-            // Format date display
             let dateDisplay = 'Today';
             const today = new Date();
             const tomorrow = new Date(today);
@@ -115,7 +104,6 @@ export default class MeetingsComponent {
                 });
             }
             
-            // Format time
             const startTime = startDate.toLocaleTimeString('en-US', { 
                 hour: 'numeric', 
                 minute: '2-digit',
@@ -127,12 +115,10 @@ export default class MeetingsComponent {
                 hour12: true 
             });
             
-            // Format status
             const statusClass = meeting.status === 'approved' ? 'bg-green-100 text-green-800' : 
                               meeting.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
                               'bg-red-100 text-red-800';
             
-            // Generate meeting card HTML
             return `
                 <div class="rounded-lg border p-4 shadow-sm meeting-card" data-meeting-id="${meeting.id}">
                     <div class="mb-3 flex items-start justify-between">
@@ -167,11 +153,10 @@ export default class MeetingsComponent {
         }).join('');
     }
 
-    // Filter meetings based on selected dropdown value
     _filterMeetingsBySelection(filter) {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
-        const allUserMeetings = this.database.meetings || []; // Use the full list
+        const allUserMeetings = this.database.meetings || [];
 
         switch (filter) {
             case 'today':
@@ -188,33 +173,26 @@ export default class MeetingsComponent {
                 return allUserMeetings.filter(m => m.start >= now && m.start <= endOfMonth && m.status !== 'canceled');
             case 'all':
             default:
-                return null; // Indicate no filter, so render uses default sections
+                return null;
         }
     }
 
-    // Setup event listeners for the meetings component
     setupEventListeners() {
-        // --- Add Filter Dropdown Listener ---
         const filterSelect = document.getElementById('meeting-filter-select');
         if (filterSelect) {
             filterSelect.addEventListener('change', (e) => {
                 const selectedFilter = e.target.value;
                 if (selectedFilter === 'all') {
-                    // Re-render with default sections
                     this.render(); 
                 } else {
-                    // Filter the meetings and re-render with the filtered list
                     const filtered = this._filterMeetingsBySelection(selectedFilter);
                     this.render(filtered); 
                 }
             });
         }
-        // --- End Filter Dropdown Listener ---
 
-        // Meeting card click handlers
         document.querySelectorAll('.meeting-card').forEach(card => {
             card.addEventListener('click', (e) => {
-                // Ignore clicks on buttons
                 if (e.target.closest('button')) return;
                 
                 const meetingId = parseInt(card.dataset.meetingId);
@@ -224,18 +202,14 @@ export default class MeetingsComponent {
             });
         });
 
-        // Join meeting button click handlers
         document.querySelectorAll('.join-meeting-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                // In a real app, this would launch the meeting
                 window.showToast('Joining meeting...', 'info');
             });
         });
 
-        // Cancel meeting button click handlers (Update status)
         document.querySelectorAll('.cancel-meeting-btn').forEach(btn => {
-            // Make the listener async
             btn.addEventListener('click', async (e) => { 
                 e.stopPropagation();
                 const meetingCard = btn.closest('.meeting-card');
@@ -245,20 +219,14 @@ export default class MeetingsComponent {
                 if (meetingId) {
                     console.log(`[MeetingsComponent] Cancel button clicked for ID: ${meetingId}`);
                     
-                    // Call the async updateMeeting function and wait for it
                     const updatedMeeting = await this.database.updateMeeting(meetingId, { status: 'canceled' });
-                    
-                    // Check if the update was successful (updateMeeting returns the updated meeting or null)
+
                     if (updatedMeeting) { 
                         window.showToast('Meeting cancelled successfully', 'success');
-                        // Re-render this component's view AFTER the update is complete
                         console.log('[MeetingsComponent] Re-rendering meetings view after cancellation.');
                         this.render(); 
                     } else {
-                        // updateMeeting handles its own errors/toasts, but we can add one here if needed
                         console.error('[MeetingsComponent] Failed to cancel meeting via updateMeeting.');
-                        // Optionally show a generic error toast here if updateMeeting failed silently
-                        // window.showToast('Failed to cancel meeting.', 'error');
                     }
                 }
             });

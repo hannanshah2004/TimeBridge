@@ -1,77 +1,54 @@
-// server.js - Backend for TimeBridge
 const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
-const axios = require('axios'); // For making HTTP requests to WeatherAPI
-const cors = require('cors'); // Add CORS middleware
+const axios = require('axios');
+const cors = require('cors'); 
 const sgMail = require('@sendgrid/mail')
 const { createClient } = require('@supabase/supabase-js');
 const { GoogleGenAI } = require('@google/genai');
 
-// Load environment variables from .env file
 dotenv.config();
 
-// --- Configuration ---
 const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 const WEATHER_API_BASE_URL = 'http://api.weatherapi.com/v1';
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; // Google API key for geocoding
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY; // Google AI API key for Gemini
-sgMail.setApiKey(process.env.EMAIL_API_KEY) // SendGrid API key for sending emails
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY; 
+const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY; 
+sgMail.setApiKey(process.env.EMAIL_API_KEY) 
 
-// Check for essential environment variables
 if (!SUPABASE_URL || !SUPABASE_KEY || !WEATHER_API_KEY) {
     console.error("Error: Missing required environment variables (SUPABASE_URL, SUPABASE_KEY, WEATHER_API_KEY).");
     console.error("Please create a .env file with these values.");
-    process.exit(1); // Exit if configuration is missing
+    process.exit(1); 
 }
 
-// --- Initialization ---
 const app = express();
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// --- Middleware ---
-app.use(cors()); // Enable CORS for all routes
-app.use(express.json()); // Parse JSON request bodies
-app.use(express.static(path.join(__dirname, '.'))); // Serve static files (HTML, CSS, JS) from the root directory
+app.use(cors()); 
+app.use(express.json()); 
+app.use(express.static(path.join(__dirname, '.'))); 
 
-// --- Helper Functions ---
-
-/**
- * Validates if a string is a valid IPv4 or IPv6 address.
- * @param {string} ip - The IP address string.
- * @returns {boolean}
- */
 function isValidIPAddress(ip) {
     const ipv4Regex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    // Basic IPv6 regex (adjust if more specific validation is needed)
     const ipv6Regex = /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i;
     return ipv4Regex.test(ip) || ipv6Regex.test(ip);
 }
 
-/**
- * Gets the client's IP address from the request headers or connection.
- * Handles proxies and IPv6-mapped IPv4 addresses.
- * @param {import('express').Request} req - The Express request object.
- * @returns {string} - The client's IP address.
- */
 function getClientIp(req) {
     const forwarded = req.headers['x-forwarded-for'];
     const ip = typeof forwarded === 'string' ? forwarded.split(',').shift() : req.socket?.remoteAddress;
     return ip ? ip.replace(/^::ffff:/, '') : '127.0.0.1'; // Fallback
 }
 
-// --- API Routes ---
 
-// Health check endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// == GOOGLE AI ENDPOINTS ==
-const ai = new GoogleGenAI({apiKey: GOOGLE_AI_API_KEY})// Your Google API key
+const ai = new GoogleGenAI({apiKey: GOOGLE_AI_API_KEY})
 app.post('/generate', async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) {
@@ -92,21 +69,19 @@ app.post('/generate', async (req, res) => {
 
 
 
-// == EMAIL API Endpoints ==
 app.post('/send-email', async (req, res) => {
   const { name, email, message } = req.body;
 
-  // Normalize into an array of recipient strings
   const recipients = Array.isArray(email)
     ? email
     : String(email)
-        .split(/[,;\s]+/)    // split on commas, semicolons or whitespace
+        .split(/[,;\s]+/)
         .map(e => e.trim())
         .filter(e => e);
 
   const msg = {
-    to:      recipients,                       // <-- array of emails
-    from:    'ha504@scarletmail.rutgers.edu',  // verified sender
+    to:      recipients,
+    from:    'ha504@scarletmail.rutgers.edu',
     subject: `New message from ${name}`,
     text:    message,
     html:    `<p>${message.replace(/\n/g, '<br>')}</p>`,
@@ -123,7 +98,6 @@ app.post('/send-email', async (req, res) => {
   }
 });
 
-// == Google API Endpoints ==
 app.get('/api/autocomplete', async (req, res) => {
     const { input } = req.query;
     if (!input) return res.status(400).json({ error: 'Missing input' });
@@ -135,9 +109,6 @@ app.get('/api/autocomplete', async (req, res) => {
           params: {
             input,
             key: GOOGLE_API_KEY,
-            // optionally restrict by country or types:
-            // components: 'country:us',
-            // types: '(cities)'
           }
         }
       );
@@ -152,16 +123,12 @@ app.get('/api/autocomplete', async (req, res) => {
     console.log(`Server listening on http://localhost:${PORT}`);
   });
 
-// == Weather API Endpoints ==
 
-// Get current weather
 app.get('/api/weather/current', async (req, res) => {
     try {
-        // Use specific query param 'q' if provided, otherwise detect IP
         let locationQuery = req.query.q;
         if (!locationQuery) {
             const clientIp = getClientIp(req);
-            // Use "auto:ip" for WeatherAPI to automatically detect location based on IP
             locationQuery = isValidIPAddress(clientIp) ? clientIp : "auto:ip";
         }
         
@@ -171,7 +138,7 @@ app.get('/api/weather/current', async (req, res) => {
             params: {
                 key: WEATHER_API_KEY,
                 q: locationQuery,
-                aqi: 'no' // Optionally exclude air quality data
+                aqi: 'no'
             }
         });
         
@@ -184,11 +151,10 @@ app.get('/api/weather/current', async (req, res) => {
     }
 });
 
-// Get weather forecast
 app.get('/api/weather/forecast', async (req, res) => {
     try {
         let locationQuery = req.query.q;
-        const days = req.query.days || 1; // Default to 1 day forecast
+        const days = req.query.days || 1;
 
         if (!locationQuery) {
             const clientIp = getClientIp(req);
@@ -218,49 +184,37 @@ app.get('/api/weather/forecast', async (req, res) => {
 
 
 app.get('/schedule/:slug', (req, res) => {
-  // always serve the booking.html shell
   res.sendFile(path.join(__dirname, 'booking.html'))
 })
 
-// --- HTML Serving (Catch-all for SPA or direct file access) ---
-
-// Serve index.html for the root path
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Serve dashboard.html
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'dashboard.html'));
 });
 
-// Serve booking.html
 app.get('/booking', (req, res) => {
     res.sendFile(path.join(__dirname, 'booking.html'));
 });
 
-// Serve other HTML files directly if requested (using named parameters instead of wildcards)
 app.get('/:page.html', (req, res) => {
     const filePath = path.join(__dirname, `${req.params.page}.html`);
     res.sendFile(filePath, (err) => {
         if (err) {
-            // If file doesn't exist, send 404
             res.status(404).send('File not found');
         }
     });
 });
 
-// Handle 404 for API routes not found - Using a regular middleware instead of a route with a wildcard
 app.use((req, res, next) => {
-    // Check if the request is for an API endpoint
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: { message: 'API endpoint not found' } });
     }
-    // Continue to next middleware for non-API routes
     next();
 });
 
-// --- Start Server ---
 app.listen(PORT, () => {
     console.log(`Server listening on http://localhost:${PORT}`);
     console.log(`Supabase URL configured: ${SUPABASE_URL.substring(0, 20)}...`);

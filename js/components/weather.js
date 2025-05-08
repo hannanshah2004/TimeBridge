@@ -1,4 +1,3 @@
-// Weather component for TimeBridge
 import { weatherApi } from '../apiClient.js';
 
 class WeatherComponent {
@@ -7,20 +6,16 @@ class WeatherComponent {
         this.weatherData = null;
         this.isLoading = false;
         this.error = null;
-        this.validationError = null; // For input validation errors
-        this.lastQuery = null; // Store the last valid query
+        this.validationError = null;
+        this.lastQuery = null;
     }
 
-    /**
-     * Render the weather widget UI
-     */
     render() {
         if (!this.container) {
             console.error('Weather component: No container element found');
             return;
         }
 
-        // Start with the search form
         this.container.innerHTML = `
             <div class="bg-white rounded-lg shadow p-4" id="weather-widget-content">
                 <div class="mb-4">
@@ -52,24 +47,14 @@ class WeatherComponent {
             </div>
         `;
 
-        // Setup event listeners
         this.setupEventListeners();
     }
 
-    /**
-     * Validate zip code format
-     * @param {string} zipcode - The zipcode to validate
-     * @returns {boolean} - Whether the zipcode is valid
-     */
     validateZipCode(zipcode) {
-        // US zip code format: 5 digits or 5+4 digits with a hyphen
         const zipRegex = /^\d{5}(-\d{4})?$/;
         return zipRegex.test(zipcode);
     }
 
-    /**
-     * Render the weather data section based on state
-     */
     renderWeatherContent() {
         if (this.isLoading) {
             return this.getLoadingTemplate();
@@ -86,9 +71,6 @@ class WeatherComponent {
         return this.getWeatherTemplate();
     }
 
-    /**
-     * Update just the weather content section
-     */
     updateWeatherContent() {
         const contentContainer = document.getElementById('weather-content');
         if (contentContainer) {
@@ -99,9 +81,6 @@ class WeatherComponent {
         }
     }
 
-    /**
-     * Fetch weather data for a specific location (must be a validated zip code)
-     */
     async fetchWeather(query) {
         if (!this.validateZipCode(query)) {
             console.error('Weather component: fetchWeather called with invalid query:', query);
@@ -145,9 +124,6 @@ class WeatherComponent {
         }
     }
 
-    /**
-     * Template for loading state
-     */
     getLoadingTemplate() {
         return `
             <div class="flex items-center justify-center py-4">
@@ -160,9 +136,6 @@ class WeatherComponent {
         `;
     }
 
-    /**
-     * Template for error state
-     */
     getErrorTemplate() {
         return `
             <div class="text-center py-4">
@@ -179,9 +152,6 @@ class WeatherComponent {
         `;
     }
 
-    /**
-     * Template for weather data display
-     */
     getWeatherTemplate() {
         if (!this.weatherData || !this.weatherData.current) {
             return `<div class="text-sm text-red-500 text-center py-4">Weather data is invalid or incomplete</div>`;
@@ -263,17 +233,11 @@ class WeatherComponent {
         `;
     }
 
-    /**
-     * Format date for forecast display
-     */
     formatDate(dateStr) {
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     }
 
-    /**
-     * Setup event listeners
-     */
     setupEventListeners() {
         const form = document.getElementById('weather-search-form');
         if (form) {
@@ -334,17 +298,11 @@ class WeatherComponent {
         });
     }
 
-    /**
-     * Initialize the component
-     */
     init() {
         console.log('Weather component: Initializing');
         this.render();
     }
     
-    /**
-     * Clean up resources when component is destroyed
-     */
     destroy() {
     }
 }

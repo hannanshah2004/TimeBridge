@@ -406,43 +406,6 @@ function setupGlobalEventListeners() {
     document.getElementById('close-toast')?.addEventListener('click', hideToast);
 }
 
-// Initialize FullCalendar
-function initCalendar() {
-    const calendarEl = document.getElementById('calendar');
-    if (!calendarEl) return;
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        slotMinTime: '08:00:00',
-        slotMaxTime: '20:00:00',
-        allDaySlot: false,
-        height: '700px',
-        events: mockDatabase.meetings,
-        eventClick: function(info) {
-            showMeetingModal(info.event.extendedProps.id || parseInt(info.event.id));
-        },
-        dateClick: function(info) {
-            // Could open a "create meeting" modal here
-            console.log('Clicked on date:', info.dateStr);
-        },
-        eventTimeFormat: {
-            hour: '2-digit',
-            minute: '2-digit',
-            meridiem: 'short'
-        }
-    });
-
-    calendar.render();
-    
-    // Store calendar instance for later use
-    window.calendar = calendar;
-}
-
 // Load upcoming meetings in the dashboard
 function loadUpcomingMeetings() {
     console.log('[loadUpcomingMeetings] Using mockDatabase.meetings:', window.mockDatabase ? window.mockDatabase.meetings : 'mockDatabase not found'); // LOG 3
@@ -669,11 +632,6 @@ async function cancelMeeting() {
     const meetingId = parseInt(cancelBtn.dataset.meetingId);
     console.log(`Attempting to delete meeting with ID: ${meetingId}`);
 
-    // Optional: Add a confirmation dialog
-    // if (!confirm('Are you sure you want to permanently delete this meeting?')) {
-    //     return;
-    // }
-
     try {
         // Perform the delete operation in Supabase
         const { error } = await supabase
@@ -698,18 +656,11 @@ async function cancelMeeting() {
         } else {
             console.warn(`Meeting ID: ${meetingId} not found in local cache after deletion.`);
         }
-
-        // Simulate sending email notification (optional, maybe remove for deletion)
-        // sendEmailNotification(deletedMeeting || {id: meetingId, title: 'Deleted Meeting'}, 'deleted');
         
         // Update UI
         hideModal();
         refreshCalendar(); // Refresh calendar view
         loadUpcomingMeetings(); // Refresh dashboard list
-        // If you are on the Meetings page, you might need to re-render it:
-        // if (document.querySelector('#meetings-view-container')) { // Check if meetings view is active
-        //     loadMeetings(); 
-        // }
         showToast('Meeting deleted successfully!', 'success');
 
     } catch (error) {
@@ -717,15 +668,6 @@ async function cancelMeeting() {
          console.error('Error deleting meeting:', error);
          showToast(`Error deleting meeting: ${error.message || 'Unknown error'}`, 'error');
     }
-}
-
-// Simulated email notification
-function sendEmailNotification(meeting, action) {
-    console.log(`[EMAIL NOTIFICATION] Meeting "${meeting.title}" has been ${action}.`);
-    console.log(`To: ${meeting.requesterEmail}`);
-    console.log(`Subject: Meeting ${action.charAt(0).toUpperCase() + action.slice(1)}: ${meeting.title}`);
-    
-    // In a real app, this would call an API endpoint to send emails
 }
 
 // Refresh calendar events

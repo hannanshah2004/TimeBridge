@@ -1,15 +1,8 @@
 class BaseApiClient {
     constructor() {
-        // The base URL for all backend API requests
         this.baseUrl = '/api'; 
     }
 
-    /**
-     * Makes a GET request to a backend endpoint.
-     * @param {string} endpoint - The API endpoint path (e.g., 'weather/current').
-     * @param {object} params - Query parameters for the request.
-     * @returns {Promise<object>} - The JSON response from the server.
-     */
     async get(endpoint, params = {}) {
         const url = new URL(`${this.baseUrl}/${endpoint}`, window.location.origin);
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
@@ -27,12 +20,6 @@ class BaseApiClient {
         }
     }
 
-    /**
-     * Makes a POST request to a backend endpoint.
-     * @param {string} endpoint - The API endpoint path.
-     * @param {object} data - The data to send in the request body.
-     * @returns {Promise<object>} - The JSON response from the server.
-     */
     async post(endpoint, data = {}) {
         try {
             const response = await fetch(`${this.baseUrl}/${endpoint}`, {
@@ -54,12 +41,6 @@ class BaseApiClient {
         }
     }
     
-    /**
-     * Makes a PUT request to a backend endpoint.
-     * @param {string} endpoint - The API endpoint path (e.g., 'meetings/123').
-     * @param {object} data - The data to send in the request body.
-     * @returns {Promise<object>} - The JSON response from the server.
-     */
     async put(endpoint, data = {}) {
         try {
             const response = await fetch(`${this.baseUrl}/${endpoint}`, {
@@ -82,33 +63,16 @@ class BaseApiClient {
     }
 }
 
-/**
- * Weather API client 
- */
 class WeatherApiClient extends BaseApiClient {
     constructor() {
         super();
     }
 
-    /**
-     * Get current weather data based on user's location (IP address detected by backend)
-     * or for a specific location query.
-     * 
-     * @param {string} [location] - Optional location query (ZIP code, city name, etc.)
-     * @returns {Promise<object>} - Weather data
-     */
     async getCurrentWeather(location) {
         const params = location ? { q: location } : {};
         return this.get('weather/current', params);
     }
 
-    /**
-     * Get forecast data.
-     * 
-     * @param {string} [location] - Optional location query (ZIP code, city name, etc.)
-     * @param {number} [days=1] - Number of days for forecast (1-14).
-     * @returns {Promise<object>} - Forecast data
-     */
     async getForecast(location, days = 1) {
         const params = { days };
         if (location) {
@@ -119,10 +83,8 @@ class WeatherApiClient extends BaseApiClient {
 }
 
 
-// Export instances of the API clients
 export const weatherApi = new WeatherApiClient();
 
-// Create an object to house all API clients for easy importing if preferred
 const apiClient = {
     weather: weatherApi,
 };

@@ -11,7 +11,6 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="min-h-screen flex flex-col">
-        <!-- Navigation -->
         <nav class="bg-white shadow-sm border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -46,7 +45,6 @@
                                         </div>
                                     </button>
                                 </div>
-                                <!-- User dropdown menu (hidden by default) -->
                                 <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
                                     <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Profile</a>
                                     <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Settings</a>
@@ -59,21 +57,16 @@
             </div>
         </nav>
 
-        <!-- Main Content -->
         <main class="flex-grow">
             <div id="main-content" class="flex-grow">
-                <!-- Dashboard view (default) -->
                 <div id="dashboard-view" class="py-6">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 class="text-2xl font-semibold text-gray-900 mb-6">Dashboard</h2>
                         
-                        <!-- Weather Widget -->
                         <div id="weather-container" class="mb-6">
-                            <!-- Weather content will be loaded here -->
                         </div>
                         
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <!-- Upcoming Meetings Card -->
                             <div class="bg-white overflow-hidden shadow rounded-lg col-span-2">
                                 <div class="px-4 py-5 sm:p-6">
                                     <div class="flex items-center justify-between mb-4">
@@ -83,14 +76,10 @@
                                         </span>
                                     </div>
                                     <div class="space-y-3" id="upcoming-meetings-list">
-                                        <!-- REMOVE SAMPLE MEETING -->
-                                        <!-- Optional: Add a loading indicator here if needed -->
-                                        <!-- <p id="loading-meetings" class="text-gray-500">Loading meetings...</p> -->
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Share Schedule Card -->
                             <div class="bg-white overflow-hidden shadow rounded-lg">
                                 <div class="px-4 py-5 sm:p-6">
                                     <h3 class="text-lg font-medium text-gray-900 mb-4">Share Your Schedule</h3>
@@ -109,13 +98,11 @@
             </div>
         </main>
 
-        <!-- Meeting Request Modal -->
         <div id="meeting-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-4 py-5 sm:p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4" id="modal-title">Meeting Request</h3>
                     <div id="meeting-details">
-                        <!-- Meeting details will be populated by JavaScript -->
                         <div class="space-y-4">
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Title</p>
@@ -160,7 +147,6 @@
             </div>
         </div>
 
-        <!-- Toast Notification -->
         <div id="toast-notification" class="hidden fixed bottom-5 right-5 bg-white shadow-lg rounded-lg p-4 flex items-center space-x-4 z-50">
             <div class="flex-shrink-0">
                 <i id="toast-icon" class="fa-solid fa-check-circle text-green-500 text-xl"></i>
@@ -177,11 +163,9 @@
         </div>
     </div>
 
-    <!-- Component Scripts -->
     <script type="module" src="./js/components/calendar.js"></script>
     <script type="module" src="./js/components/meetings.js"></script>
     
-    <!-- Main Application Script -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html> 

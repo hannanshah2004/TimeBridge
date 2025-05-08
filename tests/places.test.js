@@ -1,12 +1,9 @@
-// tests/places.test.js
 const request = require('supertest');
 const express = require('express');
 const axios = require('axios');
 
-// Mock axios
 jest.mock('axios');
 
-// Setup a minimal express app with the autocomplete endpoint
 const app = express();
 app.use(express.json());
 
@@ -36,7 +33,6 @@ describe('Places Autocomplete API', () => {
   });
 
   it('should return suggestions when given a valid input query', async () => {
-    // Mock successful response from Google Places API
     const mockPlacesData = {
       predictions: [
         {
@@ -85,7 +81,6 @@ describe('Places Autocomplete API', () => {
   });
 
   it('should handle API errors properly', async () => {
-    // Mock error from Google Places API
     axios.get.mockRejectedValueOnce(new Error('API error'));
     
     const response = await request(app).get('/api/autocomplete?input=New');

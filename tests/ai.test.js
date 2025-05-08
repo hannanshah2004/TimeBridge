@@ -1,8 +1,6 @@
-// tests/ai.test.js
 const request = require('supertest');
 const express = require('express');
 
-// Mock for the GoogleGenAI class
 jest.mock('@google/genai', () => {
   return {
     GoogleGenAI: jest.fn().mockImplementation(() => {
@@ -15,7 +13,6 @@ jest.mock('@google/genai', () => {
   };
 });
 
-// Setup a minimal express app with the generate endpoint
 const app = express();
 app.use(express.json());
 
@@ -26,7 +23,6 @@ app.post('/generate', async (req, res) => {
   }
   
   try {
-    // This would normally call the real AI service, but our mock above will intercept
     const response = await { text: 'AI generated response' };
     return res.json({ text: response.text });
   } catch (err) {

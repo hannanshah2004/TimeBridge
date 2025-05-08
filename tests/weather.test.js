@@ -1,4 +1,3 @@
-// tests/weather.test.js
 import WeatherComponent from '../js/components/weather.js';
 import { weatherApi } from '../js/apiClient.js';
 

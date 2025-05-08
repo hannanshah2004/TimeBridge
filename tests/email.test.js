@@ -1,8 +1,6 @@
-// tests/email.test.js
 const request = require('supertest');
 const express = require('express');
 
-// Mock for @sendgrid/mail
 jest.mock('@sendgrid/mail', () => {
   return {
     setApiKey: jest.fn(),
@@ -13,7 +11,6 @@ jest.mock('@sendgrid/mail', () => {
   };
 });
 
-// Setup a minimal express app with the send-email endpoint
 const app = express();
 app.use(express.json());
 const sgMail = require('@sendgrid/mail');
@@ -25,7 +22,6 @@ app.post('/send-email', async (req, res) => {
     return res.status(400).json({ error: 'Missing required parameters' });
   }
 
-  // Normalize into an array of recipient strings
   const recipients = Array.isArray(email)
     ? email
     : String(email)
@@ -67,7 +63,6 @@ describe('Email Sending Endpoint', () => {
     expect(response.body).toHaveProperty('ok', true);
     expect(sgMail.send).toHaveBeenCalledTimes(1);
     
-    // Check that sgMail.send was called with the correct parameters
     const call = sgMail.send.mock.calls[0][0];
     expect(call.subject).toBe('New message from Test User');
     expect(call.text).toBe('This is a test message');
@@ -109,7 +104,6 @@ describe('Email Sending Endpoint', () => {
       .post('/send-email')
       .send({
         name: 'Test User',
-        // email is missing
         message: 'This is a test message'
       });
     

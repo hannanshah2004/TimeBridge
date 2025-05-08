@@ -32,7 +32,7 @@ timebridge/
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/timebridge.git
+   git clone https://github.com/hannanshah2004/TimeBridge.git
    cd timebridge
    ```
 

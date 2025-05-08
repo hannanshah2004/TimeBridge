@@ -2,19 +2,6 @@
 
 TimeBridge is a user-friendly scheduling application that helps you manage your meetings and availability with a beautiful calendar interface. It's built with modern web technologies and offers smart features to streamline your scheduling workflow.
 
-![TimeBridge Screenshot](https://via.placeholder.com/800x400?text=TimeBridge+Screenshot)
-
-## Features
-
-- 📅 **Interactive Calendar**: View and manage your schedule with a responsive, intuitive calendar
-- ⚡ **Smart Scheduling**: Set your availability and let others book time with you
-- 🤖 **AI-Powered**: Generate meeting descriptions automatically with Google's Gemini AI
-- 🌦️ **Weather Integration**: View weather conditions for meeting days
-- 📍 **Location Suggestions**: Easily add meeting locations with Google Places autocomplete
-- 📨 **Email Notifications**: Receive notifications for meeting confirmations via SendGrid
-- ✅ **Meeting Management**: Approve, reschedule, or cancel meeting requests
-- 🔗 **Shareable Links**: Copy your schedule link to share with others
-
 ## Project Structure
 
 ```
@@ -80,56 +67,6 @@ timebridge/
 
 5. Open your browser to `http://localhost:3000`
 
-## Database Setup
-
-TimeBridge uses Supabase as its backend database. To set up the required tables:
-
-1. Create a Supabase project
-2. Create a `Meetings` table with the following schema:
-   - `id`: UUID (primary key)
-   - `uuid`: UUID (user ID)
-   - `title`: Text
-   - `start`: Timestamp
-   - `end`: Timestamp
-   - `requesterName`: Text
-   - `requesterEmail`: Text
-   - `attendees`: Text[]
-   - `description`: Text
-   - `meetingLocation`: Text
-   - `status`: Text (enum: 'pending', 'approved', 'canceled')
-   - `color`: Text
-
-## Usage
-
-### Authentication
-
-TimeBridge offers user authentication via Supabase Auth:
-- Sign up with your email and password
-- Sign in to access your dashboard
-- "Remember me" functionality for convenience
-
-### Dashboard
-
-The dashboard provides an overview of your upcoming meetings and important information:
-- Current weather conditions
-- Upcoming meetings list
-- Quick actions for your meetings
-
-### Calendar View
-
-The calendar view gives you a detailed look at your schedule:
-- Month and week views
-- Create new meetings
-- Set your availability
-- See busy times
-
-### Meeting Management
-
-Manage all your meetings efficiently:
-- View meeting details
-- Approve or decline meeting requests
-- Cancel existing meetings
-- Filter meetings by time period (today, this week, this month)
 
 ## Testing
 
@@ -162,13 +99,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- [Tailwind CSS](https://tailwindcss.com/) for the styling framework
-- [FullCalendar](https://fullcalendar.io/) for the calendar component
-- [Font Awesome](https://fontawesome.com/) for the icons

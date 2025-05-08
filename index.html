@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="./css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Add some basic animations for toast and modal */
         .fade-in {
             animation: fadeIn 0.3s ease-in-out;
         }
@@ -39,7 +38,6 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="min-h-screen flex flex-col">
-        <!-- Header -->
         <header class="bg-white shadow-sm border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -50,10 +48,8 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div class="max-w-md w-full space-y-8">
-                <!-- Sign In Form -->
                 <div id="signin-container">
                     <div class="text-center">
                         <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
@@ -104,7 +100,6 @@
                     </form>
                 </div>
 
-                <!-- Sign Up Form (Hidden by default) -->
                 <div id="signup-container" class="hidden">
                     <div class="text-center">
                         <h2 class="mt-6 text-3xl font-extrabold text-gray-900">
@@ -150,7 +145,6 @@
             </div>
         </main>
 
-        <!-- Footer -->
         <footer class="bg-white">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between">
                 <div class="text-center md:text-left">
@@ -164,7 +158,6 @@
             </div>
         </footer>
 
-        <!-- Success Modal -->
         <div id="success-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-4 py-5 sm:p-6 text-center">
@@ -184,7 +177,6 @@
             </div>
         </div>
 
-        <!-- Toast Notification -->
         <div id="toast-notification" class="hidden fixed bottom-5 right-5 bg-white shadow-lg rounded-lg p-4 flex items-center space-x-4 z-50">
             <div class="flex-shrink-0">
                 <i id="toast-icon" class="fa-solid fa-check-circle text-green-500 text-xl"></i>
@@ -219,17 +211,14 @@
             const toastMessage = document.getElementById('toast-message');
             const closeToastButton = document.getElementById('close-toast');
             
-            // Setup toast notifications
             auth.setupToast();
             
-            // Check if already authenticated
             const isAuth = await auth.isAuthenticated();
             if (isAuth) {
                 window.location.href = 'dashboard.html';
                 return;
             }
             
-            // Toggle between sign in and sign up forms
             showSignupButton.addEventListener('click', function() {
                 signinContainer.classList.add('hidden');
                 signupContainer.classList.remove('hidden');
@@ -242,7 +231,6 @@
                 document.title = "Sign In - TimeBridge";
             });
             
-            // Sign In form submission
             signinForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -255,7 +243,6 @@
                     return;
                 }
                 
-                // Sign in with Supabase
                 auth.signIn(email, password, rememberMe)
                     .then(() => {
                         // Show success modal
@@ -270,7 +257,6 @@
                     });
             });
             
-            // Sign Up form submission
             signupForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -288,10 +274,8 @@
                     return;
                 }
                 
-                // Sign up with Supabase
                 auth.signUp(email, password)
                     .then(() => {
-                        // Show success modal
                         modalTitle.textContent = 'Account Created!';
                         modalMessage.textContent = 'Your account has been successfully created. You can now use TimeBridge.';
                         successModal.classList.remove('hidden');
@@ -307,27 +291,22 @@
                     });
             });
             
-            // Close modal button handler
             closeModalButton.addEventListener('click', function() {
                 successModal.classList.add('hidden');
                 successModal.classList.remove('fade-in');
-                // Redirect to dashboard
                 window.location.href = 'dashboard.html';
             });
             
-            // Close toast button handler
             closeToastButton.addEventListener('click', function() {
                 auth.hideToast();
             });
             
-            // Check if user has "remember me" set
             const rememberedUser = auth.getRememberedEmail();
             if (rememberedUser) {
                 const emailInput = document.getElementById('signin-email');
                 if (emailInput) {
                     emailInput.value = rememberedUser;
                     
-                    // Optionally check the remember me box
                     const rememberMeCheckbox = document.getElementById('remember-me');
                     if (rememberMeCheckbox) {
                         rememberMeCheckbox.checked = true;
@@ -335,7 +314,6 @@
                 }
             }
             
-            // Close modal when clicking outside
             successModal.addEventListener('click', function(e) {
                 if (e.target === successModal) {
                     successModal.classList.add('hidden');

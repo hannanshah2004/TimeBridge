@@ -11,7 +11,6 @@
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="min-h-screen flex flex-col">
-        <!-- Header -->
         <header class="bg-white shadow-sm border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -19,7 +18,6 @@
                         <h1 class="text-xl font-bold text-indigo-600">TimeBridge</h1>
                     </div>
                     
-                    <!-- Add user profile button -->
                     <div class="flex items-center">
                         <div class="md:ml-4 md:flex-shrink-0 md:flex md:items-center">
                             <button type="button" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" id="user-menu-button">
@@ -28,7 +26,6 @@
                                     <span class="text-indigo-800 font-medium" id="user-initials">JD</span>
                                 </div>
                             </button>
-                            <!-- User dropdown menu (hidden by default) -->
                             <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
                                 <a href="dashboard.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Dashboard</a>
                                 <a href="#" id="sign-out" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Sign out</a>
@@ -39,7 +36,6 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="flex-grow">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="md:flex md:items-center md:justify-between mb-8">
@@ -50,14 +46,12 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Calendar View -->
                     <div class="lg:col-span-2">
                         <div class="bg-white rounded-lg shadow overflow-hidden">
                             <div id="booking-calendar" class="h-[600px]"></div>
                         </div>
                     </div>
 
-                    <!-- Booking Form -->
                     <div class="lg:col-span-1">
                         <div class="bg-white rounded-lg shadow overflow-hidden">
                             <div class="px-4 py-5 sm:p-6">
@@ -112,7 +106,6 @@
             </div>
         </main>
 
-        <!-- Footer -->
         <footer class="bg-white">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between">
                 <div class="text-center md:text-left">
@@ -126,7 +119,6 @@
             </div>
         </footer>
 
-        <!-- Success Modal -->
         <div id="success-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-4 py-5 sm:p-6 text-center">
@@ -146,7 +138,6 @@
             </div>
         </div>
         
-        <!-- Toast Notification -->
         <div id="toast-notification" class="hidden fixed bottom-5 right-5 bg-white shadow-lg rounded-lg p-4 flex items-center space-x-4 z-50">
             <div class="flex-shrink-0">
                 <i id="toast-icon" class="fa-solid fa-check-circle text-green-500 text-xl"></i>
@@ -167,32 +158,24 @@
         import * as auth from './js/auth.js';
         
         document.addEventListener('DOMContentLoaded', async function() {
-            // Initialize authentication
             if (!await auth.checkAuth()) return;
             
-            // Setup user menu 
             await auth.setupUserMenu();
             
-            // Setup toast notifications
             auth.setupToast();
             
-            // Initialize booking calendar
             initBookingCalendar();
             
-            // Setup form submission
             setupBookingForm();
             
-            // Setup modal close button
             document.getElementById('close-success-modal')?.addEventListener('click', function() {
                 document.getElementById('success-modal').classList.add('hidden');
             });
         });
         
-        // Global variables to store selected date and time
         let selectedDate = null;
         let selectedTime = null;
         
-        // Initialize booking calendar
         function initBookingCalendar() {
             const calendarEl = document.getElementById('booking-calendar');
             if (!calendarEl) return;
@@ -218,7 +201,6 @@
                     handleTimeSlotSelect(info.start, info.end);
                 },
                 events: [
-                    // Simulated busy slots (in a real app, these would come from an API)
                     {
                         start: new Date(new Date().setHours(10, 0, 0, 0)),
                         end: new Date(new Date().setHours(11, 0, 0, 0)),
@@ -244,11 +226,10 @@
                     meridiem: 'short'
                 },
                 businessHours: {
-                    daysOfWeek: [1, 2, 3, 4, 5], // Monday - Friday
+                    daysOfWeek: [1, 2, 3, 4, 5],
                     startTime: '09:00',
                     endTime: '18:00',
                 },
-                // Disable past dates and weekends
                 validRange: {
                     start: new Date()
                 },
@@ -258,29 +239,22 @@
             calendar.render();
         }
         
-        // Check if a time slot is available
         function isTimeSlotAvailable(start, end) {
-            // In a real app, this would check against backend data
-            // For this demo, just checking if it's a weekday and within business hours
             const day = start.getDay();
             const hour = start.getHours();
             
-            // Check if it's a weekday (1-5) and between 9 AM and 6 PM
             return day >= 1 && day <= 5 && hour >= 9 && hour < 18;
         }
         
-        // Handle time slot selection
         function handleTimeSlotSelect(start, end) {
             selectedDate = start;
             selectedTime = { start, end };
             
-            // Update the display
             const selectedTimeDisplay = document.getElementById('selected-time-display');
             const selectedDateText = document.getElementById('selected-date-text');
             const selectedTimeText = document.getElementById('selected-time-text');
             
             if (selectedTimeDisplay && selectedDateText && selectedTimeText) {
-                // Format the date and time
                 const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 const timeOptions = { hour: '2-digit', minute: '2-digit' };
                 
@@ -292,12 +266,10 @@
                 selectedTimeText.textContent = `${formattedStartTime} - ${formattedEndTime}`;
                 selectedTimeDisplay.classList.remove('hidden');
                 
-                // Enable the submit button
                 document.getElementById('submit-booking').removeAttribute('disabled');
             }
         }
         
-        // Setup booking form submission
         function setupBookingForm() {
             const form = document.getElementById('booking-form');
             if (!form) return;
@@ -310,7 +282,6 @@
                     return;
                 }
                 
-                // Gather form data
                 const formData = {
                     name: document.getElementById('name').value,
                     email: document.getElementById('email').value,
@@ -321,13 +292,10 @@
                     end: selectedTime.end
                 };
                 
-                // In a real app, this would send the data to a backend API
                 console.log('Booking request:', formData);
                 
-                // Show success modal
                 document.getElementById('success-modal').classList.remove('hidden');
                 
-                // Reset form
                 form.reset();
                 selectedDate = null;
                 selectedTime = null;

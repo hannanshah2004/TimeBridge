@@ -27,15 +27,6 @@ timebridge/
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 16+ and npm
-- Supabase account (free tier works fine)
-- Optional API keys:
-  - Google Places API for location autocomplete
-  - Google Gemini AI for generating meeting descriptions
-  - WeatherAPI for weather information
-  - SendGrid for email notifications
 
 ### Installation
 

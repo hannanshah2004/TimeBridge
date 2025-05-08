@@ -5,30 +5,25 @@ import CalendarComponent from './components/calendar.js';
 import MeetingsComponent from './components/meetings.js';
 
 async function fetchMeetings() {
-    // --- Get current user's UUID first ---
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
         console.error("Error fetching user or no user logged in for fetching meetings:", userError);
-        return []; // Return empty array if no user is logged in
+        return []; 
     }
     const userUuid = user.id;
     console.log(`Fetching meetings for user UUID: ${userUuid}`);
-    // --- End fetching user UUID ---
 
-    // --- Fetch meetings filtered by user UUID ---
     let { data: meetingsData, error: meetingsError } = await supabase
         .from('Meetings')
         .select('*')
-        .eq('uuid', userUuid); // Filter by the user's UUID
+        .eq('uuid', userUuid);
 
     if (meetingsError) {
         console.error("Error fetching meetings:", meetingsError);
         return [];
     }
-    // --- End fetching meetings ---
 
-    // Convert timestamp strings to Date objects
     const meetings = meetingsData.map(meeting => ({
         ...meeting,
         start: new Date(meeting.start),
@@ -50,38 +45,25 @@ async function fetchUser(){
 }
 
 document.addEventListener('DOMContentLoaded', async function () {
-    // Check if the user is authenticated using Supabase
     const isAuthenticated = await auth.isAuthenticated();
     
-    // If on login page, don't continue with app initialization
     if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
         if (isAuthenticated) {
-            // If already authenticated and on login page, redirect to dashboard
             window.location.href = 'dashboard.html';
         }
-        return; // Don't continue with app initialization on login page
+        return; 
     }
     
-    // If not authenticated and not on login page, redirect to login
     if (!isAuthenticated) {
         window.location.href = 'index.html';
         return;
     }
     
-    // Fetch meetings before initializing the database
     console.log('Attempting to fetch meetings...');
     const meetings = await fetchMeetings();
     console.log('Meetings fetched in DOMContentLoaded:', meetings);
     const user = await fetchUser();
     
-    /*
-    if (!user) {
-        window.location.href = '../pages/userAuth.html';
-        return;
-    }
-        */
-
-    // Now initialize mockDatabase
     const mockDatabase = {
         meetings: meetings || [],
 
@@ -98,9 +80,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         },
 
         async updateMeeting(id, updates) {
-            // Prepare updates for Supabase (only send fields being changed)
             const supabaseUpdates = { ...updates };
-            // Adjust color based on status for Supabase update
             if (updates.status === 'approved') {
                 supabaseUpdates.color = '#10b981';
             } else if (updates.status === 'canceled') {
@@ -108,64 +88,55 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
             
             try {
-                // Update Supabase first
                 const { data, error } = await supabase
                     .from('Meetings')
                     .update(supabaseUpdates)
                     .eq('id', id)
-                    .select(); // Select the updated row
+                    .select();
 
                 if (error) {
                     console.error('Error updating meeting in Supabase:', error);
-                    throw error; // Re-throw the error to be caught by the caller
+                    throw error;
                 }
 
-                // If Supabase update is successful, update the local mockDatabase
                 const index = this.meetings.findIndex(m => m.id === id);
                 if (index !== -1 && data && data.length > 0) {
-                    // Update local array with the data returned from Supabase
-                    // Ensure start/end are Date objects in the local cache
                     this.meetings[index] = {
                          ...data[0],
                          start: new Date(data[0].start),
                          end: new Date(data[0].end)
                     };
                     console.log('Updated meeting locally:', this.meetings[index]);
-                    return this.meetings[index]; // Return the updated meeting
+                    return this.meetings[index];
                 } else {
                      console.warn('Meeting not found locally after Supabase update, or no data returned', id);
                      return null;
                 }
             } catch (error) {
-                // Let the calling function handle UI feedback (e.g., showToast)
                 console.error('Failed to update meeting:', error);
-                return null; // Indicate failure
+                return null;
             }
         },
 
         getUpcomingMeetings() {
             const now = new Date();
             const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            // Set time to end of day for comparison range
             sevenDaysFromNow.setHours(23, 59, 59, 999);
-            now.setHours(0, 0, 0, 0); // Set now to start of day
+            now.setHours(0, 0, 0, 0);
 
             console.log(`[getUpcomingMeetings] Filtering between ${now.toISOString()} and ${sevenDaysFromNow.toISOString()}`);
             return this.meetings
                 .filter(m => {
                     const isUpcoming = m.start >= now && m.start <= sevenDaysFromNow;
                     const isNotCanceled = m.status !== 'canceled';
-                    // Log details for each meeting being filtered
-                    // console.log(`[getUpcomingMeetings] Meeting ID: ${m.id}, Start: ${m.start.toISOString()}, Status: ${m.status}, IsUpcoming: ${isUpcoming}, IsNotCanceled: ${isNotCanceled}, Keep: ${isUpcoming && isNotCanceled}`);
                     return isUpcoming && isNotCanceled;
                 })
-                .sort((a, b) => a.start - b.start); // Compare dates directly
+                .sort((a, b) => a.start - b.start);
         },
 
         getLaterMeetings() {
             const now = new Date();
             const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-            // Set time to start of the day after 7 days
             sevenDaysFromNow.setHours(0, 0, 0, 0);
 
             console.log(`[getLaterMeetings] Filtering for dates after ${sevenDaysFromNow.toISOString()}`);
@@ -173,11 +144,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .filter(m => {
                     const isLater = m.start > sevenDaysFromNow;
                     const isNotCanceled = m.status !== 'canceled';
-                     // Log details for each meeting being filtered
-                    // console.log(`[getLaterMeetings] Meeting ID: ${m.id}, Start: ${m.start.toISOString()}, Status: ${m.status}, IsLater: ${isLater}, IsNotCanceled: ${isNotCanceled}, Keep: ${isLater && isNotCanceled}`);
                     return isLater && isNotCanceled;
                 })
-                .sort((a, b) => a.start - b.start); // Compare dates directly
+                .sort((a, b) => a.start - b.start);
         },
 
         getMeetingById(id) {
@@ -186,57 +155,46 @@ document.addEventListener('DOMContentLoaded', async function () {
     };
     console.log('mockDatabase initialized with meetings:', mockDatabase.meetings);
 
-    // Initialize application only after `mockDatabase` is ready
     await initApplication(mockDatabase);
     console.log('TimeBridge app initialized!');
 });
 
-// Modify `initApplication` to accept `mockDatabase`
 async function initApplication(mockDatabase) {
-    window.mockDatabase = mockDatabase; // Make it globally accessible if needed
+    window.mockDatabase = mockDatabase;
     
-    // Get user email from Supabase auth
     const userEmail = await auth.getUserEmail();
     
-    // Check if we're on the dashboard page
     if (window.location.pathname.includes('dashboard.html')) {
         setupMainContainer();
         setupNavigation();
         
-        // --- Call setupUserMenu here ---
-        await auth.setupUserMenu(); // Setup the user menu and sign-out button
-        // --- End call ---
+        await auth.setupUserMenu();
         
-        loadView('dashboard'); // Load initial view AFTER menu is set up
+        loadView('dashboard');
         setupGlobalEventListeners();
     }
 }
 
 // Setup the main container for dynamic content
 function setupMainContainer() {
-    // Check if main content container exists, if not create it
     if (!document.getElementById('main-content')) {
         const mainContent = document.createElement('div');
         mainContent.id = 'main-content';
         mainContent.className = 'flex-grow';
         
-        // Find where to insert it (after nav, before footer)
         const main = document.querySelector('main');
         if (main) {
             main.innerHTML = '';
             main.appendChild(mainContent);
         } else {
-            // If no main element exists, create one
             const newMain = document.createElement('main');
             newMain.className = 'flex-grow';
             newMain.appendChild(mainContent);
             
-            // Insert after nav
             const nav = document.querySelector('nav');
             if (nav) {
                 nav.after(newMain);
             } else {
-                // If no nav, insert as first child of body
                 document.body.prepend(newMain);
             }
         }
@@ -245,7 +203,6 @@ function setupMainContainer() {
 
 // Setup navigation event listeners
 function setupNavigation() {
-    // Dashboard link
     const dashboardLinks = document.querySelectorAll('a[href="#dashboard"]');
     dashboardLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -254,7 +211,6 @@ function setupNavigation() {
         });
     });
     
-    // Calendar/Schedule link
     const scheduleLinks = document.querySelectorAll('a[href="#schedule"], #schedule-nav-link');
     scheduleLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -263,7 +219,6 @@ function setupNavigation() {
         });
     });
     
-    // Meetings link
     const meetingsLinks = document.querySelectorAll('a[href="#meetings"]');
     meetingsLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -275,10 +230,8 @@ function setupNavigation() {
 
 // Load the requested view
 function loadView(viewName) {
-    // Update active nav link
     updateActiveNavLink(viewName);
     
-    // Load the appropriate view
     switch(viewName) {
         case 'dashboard':
             loadDashboard();
@@ -296,14 +249,12 @@ function loadView(viewName) {
 
 // Update active nav link
 function updateActiveNavLink(viewName) {
-    // Remove active class from all links
     document.querySelectorAll('nav a').forEach(link => {
         link.classList.remove('nav-active');
         link.classList.remove('border-indigo-500', 'text-gray-900');
         link.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700');
     });
     
-    // Add active class to current view link
     let selector;
     switch(viewName) {
         case 'dashboard':
@@ -325,7 +276,6 @@ function updateActiveNavLink(viewName) {
     }
 }
 
-// Load dashboard view
 function loadDashboard() {
     const mainContent = document.getElementById('main-content');
     if (!mainContent) return;
@@ -361,7 +311,6 @@ function loadDashboard() {
         </div>
     `;
     
-    // Initialize Weather Widget after container is added to DOM
     const weatherContainer = document.getElementById('weather-container');
     if (weatherContainer) {
         const weatherWidget = new WeatherComponent(weatherContainer);
@@ -370,43 +319,32 @@ function loadDashboard() {
         console.error('Weather container not found after loading dashboard view.');
     }
     
-    // Load meetings data
     loadUpcomingMeetings();
-    // REMOVED call to setupCopyScheduleLink();
 }
 
-// Load calendar view using the Calendar component
 function loadCalendar() {
-    // Create and render the Calendar component
     const calendarComponent = new CalendarComponent(mockDatabase);
     calendarComponent.render();
-    calendarComponent.setupEventListeners(); // Ensure event listeners are set up after rendering
+    calendarComponent.setupEventListeners();
 }
 
-// Load meetings view using the Meetings component
 function loadMeetings() {
-    // Create and render the Meetings component
     const meetingsComponent = new MeetingsComponent(mockDatabase);
     meetingsComponent.render();
-    // Assuming MeetingsComponent also has a setupEventListeners method
     if (typeof meetingsComponent.setupEventListeners === 'function') {
         meetingsComponent.setupEventListeners();
     }
 }
 
-// Setup global event listeners
 function setupGlobalEventListeners() {
-    // Modal close buttons
     document.getElementById('close-modal')?.addEventListener('click', hideModal);
     document.getElementById('approve-meeting')?.addEventListener('click', approveMeeting);
     document.getElementById('reschedule-meeting')?.addEventListener('click', rescheduleMeeting);
     document.getElementById('cancel-meeting')?.addEventListener('click', cancelMeeting);
     
-    // Toast close button
     document.getElementById('close-toast')?.addEventListener('click', hideToast);
 }
 
-// Load upcoming meetings in the dashboard
 function loadUpcomingMeetings() {
     console.log('[loadUpcomingMeetings] Using mockDatabase.meetings:', window.mockDatabase ? window.mockDatabase.meetings : 'mockDatabase not found'); // LOG 3
     const meetingsList = document.getElementById('upcoming-meetings-list');
@@ -418,7 +356,7 @@ function loadUpcomingMeetings() {
     }
     
     const upcomingMeetings = window.mockDatabase.getUpcomingMeetings();
-    console.log('[loadUpcomingMeetings] Filtered upcoming meetings:', upcomingMeetings); // LOG 4
+    console.log('[loadUpcomingMeetings] Filtered upcoming meetings:', upcomingMeetings);
     
     if (upcomingMeetings.length === 0) {
         meetingsList.innerHTML = '<p class="text-gray-500 text-center py-4">No upcoming meetings</p>';
@@ -468,11 +406,9 @@ function loadUpcomingMeetings() {
         `;
     }).join('');
     
-    // Update counter
     countSpan.textContent = `${upcomingMeetings.length} upcoming`;
 }
 
-// Show meeting details modal
 function showMeetingModal(meetingId) {
     const meeting = mockDatabase.meetings.find(m => m.id === meetingId);
     if (!meeting) return;
@@ -483,14 +419,12 @@ function showMeetingModal(meetingId) {
     
     if (!modal || !meetingDetails || !modalTitle) return;
     
-    // Set modal title based on meeting status
     if (meeting.status === 'pending') {
         modalTitle.textContent = 'Meeting Request';
     } else {
         modalTitle.textContent = 'Meeting Details';
     }
     
-    // Format dates
     const startDate = new Date(meeting.start);
     const endDate = new Date(meeting.end);
     const formattedDate = startDate.toLocaleDateString('en-US', { 
@@ -508,7 +442,6 @@ function showMeetingModal(meetingId) {
         minute: '2-digit'
     });
     
-    // Set meeting details content
     meetingDetails.innerHTML = `
         <div class="space-y-4">
             <div>
@@ -543,7 +476,6 @@ function showMeetingModal(meetingId) {
         </div>
     `;
     
-    // Show/hide action buttons based on status
     const approveBtn = document.getElementById('approve-meeting');
     const rescheduleBtn = document.getElementById('reschedule-meeting');
     const cancelBtn = document.getElementById('cancel-meeting');
@@ -554,7 +486,6 @@ function showMeetingModal(meetingId) {
             rescheduleBtn.style.display = 'block';
             cancelBtn.style.display = 'block';
             
-            // Store the meeting ID on the buttons for the action handlers
             approveBtn.dataset.meetingId = meeting.id;
             rescheduleBtn.dataset.meetingId = meeting.id;
             cancelBtn.dataset.meetingId = meeting.id;
@@ -569,11 +500,9 @@ function showMeetingModal(meetingId) {
         }
     }
     
-    // Show the modal
     modal.classList.remove('hidden');
     modal.classList.add('fade-in');
     
-    // Close modal when clicking outside
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
             hideModal();
@@ -581,7 +510,6 @@ function showMeetingModal(meetingId) {
     });
 }
 
-// Hide meeting modal
 function hideModal() {
     const modal = document.getElementById('meeting-modal');
     if (!modal) return;
@@ -590,7 +518,6 @@ function hideModal() {
     modal.classList.remove('fade-in');
 }
 
-// Approve meeting
 async function approveMeeting() {
     const approveBtn = document.getElementById('approve-meeting');
     if (!approveBtn || !approveBtn.dataset.meetingId) return;
@@ -600,10 +527,8 @@ async function approveMeeting() {
         const updatedMeeting = await mockDatabase.updateMeeting(meetingId, { status: 'approved' });
         
         if (updatedMeeting) {
-            // Simulate sending email notification
             sendEmailNotification(updatedMeeting, 'approved');
             
-            // Update UI
             hideModal();
             refreshCalendar();
             loadUpcomingMeetings();
@@ -616,15 +541,11 @@ async function approveMeeting() {
     }
 }
 
-// Reschedule meeting
 function rescheduleMeeting() {
-    // In a real app, this would open a reschedule dialog
-    // For this demo, we'll just show a toast message
     hideModal();
     showToast('Reschedule functionality would open a dialog', 'info');
 }
 
-// Cancel meeting
 async function cancelMeeting() {
     const cancelBtn = document.getElementById('cancel-meeting');
     if (!cancelBtn || !cancelBtn.dataset.meetingId) return;
@@ -633,51 +554,42 @@ async function cancelMeeting() {
     console.log(`Attempting to delete meeting with ID: ${meetingId}`);
 
     try {
-        // Perform the delete operation in Supabase
         const { error } = await supabase
             .from('Meetings')
             .delete()
             .eq('id', meetingId);
 
         if (error) {
-            // If Supabase returned an error, throw it to be caught below
             console.error('Supabase delete error:', error);
             throw error;
         }
 
-        // If deletion was successful (no error thrown)
         console.log(`Successfully deleted meeting ID: ${meetingId} from Supabase.`);
         
-        // Remove the meeting from the local mockDatabase cache
         const index = window.mockDatabase.meetings.findIndex(m => m.id === meetingId);
         if (index !== -1) {
-            const deletedMeeting = window.mockDatabase.meetings.splice(index, 1)[0]; // Remove the item
+            const deletedMeeting = window.mockDatabase.meetings.splice(index, 1)[0];
             console.log('Removed meeting from local cache:', deletedMeeting);
         } else {
             console.warn(`Meeting ID: ${meetingId} not found in local cache after deletion.`);
         }
         
-        // Update UI
         hideModal();
-        refreshCalendar(); // Refresh calendar view
-        loadUpcomingMeetings(); // Refresh dashboard list
+        refreshCalendar();
+        loadUpcomingMeetings();
         showToast('Meeting deleted successfully!', 'success');
 
     } catch (error) {
-         // Handle errors from Supabase or other issues
          console.error('Error deleting meeting:', error);
          showToast(`Error deleting meeting: ${error.message || 'Unknown error'}`, 'error');
     }
 }
 
-// Refresh calendar events
 function refreshCalendar() {
     if (!window.calendar) return;
     
-    // Remove all events
     window.calendar.getEvents().forEach(event => event.remove());
     
-    // Add updated events
     mockDatabase.meetings.forEach(meeting => {
         window.calendar.addEvent({
             id: meeting.id,
@@ -696,7 +608,6 @@ function refreshCalendar() {
     });
 }
 
-// Show toast notification
 function showToast(message, type = 'success') {
     const toast = document.getElementById('toast-notification');
     const toastMessage = document.getElementById('toast-message');
@@ -704,10 +615,8 @@ function showToast(message, type = 'success') {
     
     if (!toast || !toastMessage || !toastIcon) return;
     
-    // Set message
     toastMessage.textContent = message;
     
-    // Set appropriate icon and color based on type
     if (type === 'success') {
         toastIcon.className = 'fa-solid fa-check-circle text-green-500 text-xl';
     } else if (type === 'error') {
@@ -718,29 +627,24 @@ function showToast(message, type = 'success') {
         toastIcon.className = 'fa-solid fa-exclamation-circle text-yellow-500 text-xl';
     }
     
-    // Show toast
     toast.classList.remove('hidden');
     toast.classList.add('toast-enter');
     
-    // Auto-hide after 5 seconds
     setTimeout(hideToast, 5000);
 }
 
-// Hide toast notification
 function hideToast() {
     const toast = document.getElementById('toast-notification');
     if (!toast || toast.classList.contains('hidden')) return;
     
     toast.classList.add('toast-leave');
     
-    // Wait for animation to complete before hiding
     setTimeout(() => {
         toast.classList.add('hidden');
         toast.classList.remove('toast-enter', 'toast-leave');
     }, 300);
 }
 
-// Expose necessary functions to the global scope
 window.showMeetingModal = showMeetingModal;
 window.hideModal = hideModal;
 window.approveMeeting = approveMeeting;
